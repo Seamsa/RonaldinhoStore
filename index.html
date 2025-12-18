@@ -53,7 +53,7 @@
         <div id="sidebar-cart-footer" class="p-6 border-t-4 border-black bg-gray-50">
             <div class="flex justify-between items-center mb-6 font-bold text-2xl heading-font">
                 <span data-i18n="total">TOTAL</span>
-                <span id="sidebar-total">0€</span>
+                <span id="sidebar-total">0 DA</span>
             </div>
             <button onclick="goToCheckout()" class="w-full bg-black text-[#E2A900] p-6 heading-font text-2xl neo-brutal-shadow-hover transition-all" data-i18n="checkout_btn">FINALISER LA COMMANDE</button>
         </div>
@@ -427,7 +427,7 @@
         document.addEventListener('mousemove', (e) => {
             const c = document.getElementById('cursor');
             if(c) { 
-                c.style.left = e.clientX + 'px'; 
+                c.style.left = e.clientX + 'px';  
                 c.style.top = e.clientY + 'px'; 
             }
         });
