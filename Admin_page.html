@@ -73,6 +73,17 @@
     </main>
 
     <script>
+        // ==========================================
+        // 🔐 VERROU DE SÉCURITÉ ADMIN
+        // ==========================================
+        const ADMIN_PASSWORD = "Ronaldinhoailliergauche"; // <--- CHANGE TON MOT DE PASSE ICI
+        
+        const access = prompt("Accès réservé au propriétaire. Entrez le mot de passe :");
+        if (access !== ADMIN_PASSWORD) {
+            alert("Accès refusé ! Retour à la boutique.");
+            window.location.href = "index.html";
+        }
+
         // CONFIG FIREBASE
         const firebaseConfig = {
             apiKey: "AIzaSyCrEd8zSy5bBape6ws3v7mvTavcZfhCKM8",
@@ -141,7 +152,7 @@
                     <p>📞 ${o.phone} | 📍 ${o.wilaya}</p>
                     <p class="text-sm italic">${o.adresse}</p>
                     <div class="my-4 bg-gray-100 p-2 text-sm">
-                        ${o.items.map(i => `• ${i.name} (Taille: ${i.size})`).join('<br>')}
+                        ${o.items ? o.items.map(i => `• ${i.name} (Taille: ${i.size})`).join('<br>') : 'Pas de détails'}
                     </div>
                     <div class="flex justify-between items-center">
                         <span class="text-xs opacity-50">${o.date}</span>
