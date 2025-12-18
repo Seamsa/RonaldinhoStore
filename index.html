@@ -10,6 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Grotesk:wght@300;400;700&display=swap" rel="stylesheet">
     
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
     <style>
@@ -31,6 +32,8 @@
         #cart-overlay { opacity: 0; pointer-events: none; transition: opacity 0.3s ease; z-index: 60; }
         #cart-overlay.open { opacity: 1; pointer-events: auto; }
         .input-neo { border: 4px solid black; padding: 1rem; width: 100%; font-weight: bold; margin-top: 0.5rem; outline: none; }
+        .sold-out-badge { background: #ff0000; color: white; padding: 5px 10px; font-weight: 900; border: 3px solid black; position: absolute; top: 10px; right: 10px; transform: rotate(5deg); z-index: 20; }
+        .grayscale-img { filter: grayscale(1); opacity: 0.6; }
     </style>
 </head>
 <body class="selection:bg-black selection:text-[#E2A900]">
@@ -44,20 +47,28 @@
             <button onclick="toggleCart(false)" class="bg-black text-white p-2 border-2 border-black font-bold">X</button>
         </div>
         
-        <div class="p-4 border-b-2 border-black">
-            <button onclick="toggleCart(false); showView('orders')" class="w-full bg-white border-4 border-black p-2 font-bold hover:bg-black hover:text-white transition-all text-sm uppercase">
-                📂 Voir mes commandes
-            </button>
+        <div class="p-4 border-b-2 border-black bg-gray-50">
+            <div id="sidebar-auth-logged-out">
+                <button onclick="toggleCart(false); showView('auth')" class="w-full bg-black text-[#E2A900] p-2 font-bold uppercase hover:bg-gray-800 transition-all text-sm">
+                    👤 SE CONNECTER
+                </button>
+            </div>
+            <div id="sidebar-auth-logged-in" class="hidden">
+                <p class="text-sm font-bold mb-2">Compte : <span id="sidebar-user-email" class="text-blue-600"></span></p>
+                <button onclick="toggleCart(false); showView('orders')" class="w-full bg-white border-4 border-black p-2 font-bold hover:bg-black hover:text-white transition-all text-sm uppercase mb-1">
+                    📂 Voir mes commandes
+                </button>
+                <button onclick="logout()" class="text-xs underline font-bold text-red-600">Se déconnecter</button>
+            </div>
         </div>
 
         <div id="sidebar-cart-items" class="flex-grow overflow-y-auto p-6 space-y-4 font-bold"></div>
-        
         <div id="sidebar-cart-footer" class="p-6 border-t-4 border-black bg-gray-50">
             <div class="flex justify-between items-center mb-6 font-bold text-2xl heading-font">
                 <span data-i18n="total">TOTAL</span>
                 <span id="sidebar-total">0 DA</span>
             </div>
-            <button onclick="goToCheckout()" class="w-full bg-black text-[#E2A900] p-6 heading-font text-2xl neo-brutal-shadow-hover transition-all" data-i18n="checkout_btn">FINALISER LA COMMANDE</button>
+            <button type="button" onclick="goToCheckout()" class="w-full bg-black text-[#E2A900] p-6 heading-font text-2xl neo-brutal-shadow-hover transition-all" data-i18n="checkout_btn">FINALISER LA COMMANDE</button>
         </div>
     </aside>
 
@@ -115,6 +126,26 @@
         </section>
     </main>
 
+    <main id="auth-view" class="view-section py-32 px-4 bg-white min-h-screen">
+        <div class="max-w-md mx-auto border-8 border-black p-8 neo-brutal-shadow bg-[#E2A900]">
+            <h2 class="heading-font text-4xl mb-8 text-center bg-black text-white p-2">CONNEXION</h2>
+            <button onclick="loginGoogle()" class="w-full bg-white border-4 border-black p-4 mb-6 font-bold flex items-center justify-center gap-2 hover:bg-gray-100">
+                <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-6 h-6"> Continuer avec Google
+            </button>
+            <div class="text-center font-bold mb-4">- OU -</div>
+            <div class="flex mb-4 bg-white border-4 border-black">
+                <button onclick="toggleAuthMode('login')" id="btn-login-mode" class="flex-1 p-2 font-bold bg-black text-white">Login</button>
+                <button onclick="toggleAuthMode('signup')" id="btn-signup-mode" class="flex-1 p-2 font-bold">Sign Up</button>
+            </div>
+            <div id="email-form">
+                <input type="email" id="auth-email" class="input-neo mb-2" placeholder="Email">
+                <input type="password" id="auth-pass" class="input-neo mb-4" placeholder="Mot de passe">
+                <button id="auth-action-btn" onclick="handleEmailAuth()" class="w-full bg-black text-white p-4 heading-font neo-brutal-shadow-hover">SE CONNECTER</button>
+            </div>
+            <button onclick="showView('home')" class="mt-6 text-sm font-bold underline w-full text-center">Retour au site</button>
+        </div>
+    </main>
+
     <main id="product-view" class="view-section py-32 px-4">
         <div class="max-w-7xl mx-auto" id="product-detail-container"></div>
     </main>
@@ -122,7 +153,14 @@
     <main id="orders-view" class="view-section py-32 px-4 bg-white min-h-screen">
         <div class="max-w-4xl mx-auto">
             <h2 class="heading-font text-5xl mb-8 border-b-8 border-black pb-4">MES_COMMANDES</h2>
+            
+            <div id="not-connected-msg" class="hidden p-8 border-4 border-black bg-yellow-100 text-center font-bold mb-8">
+                Connecte-toi pour voir ton historique ! <br>
+                <button onclick="showView('auth')" class="mt-4 bg-black text-white px-6 py-2">CONNEXION</button>
+            </div>
+
             <div id="orders-list" class="space-y-8"></div>
+            
             <button onclick="showView('home')" class="mt-12 bg-black text-white px-10 py-5 heading-font neo-brutal-shadow-sm hover:bg-gray-800 transition-all">← RETOUR</button>
         </div>
     </main>
@@ -135,7 +173,7 @@
             </div>
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div class="lg:col-span-2 border-8 border-black neo-brutal-shadow h-[500px] bg-gray-200">
-                    <iframe width="100%" height="100%" frameborder="0" src="https://maps.google.com/maps?q=Sidi%20M'hamed%20Alger&t=&z=13&ie=UTF8&iwloc=&output=embed" style="filter: grayscale(1);"></iframe>
+                    <iframe width="100%" height="100%" frameborder="0" src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3197.4339459325996!2d3.0478051764669866!3d36.74813587093375!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x128fb263914a383b%3A0x600b6529b5a2e58a!2sAv.%20Souidani%20Boudjemaa%2C%20Sidi%20M'Hamed!5e0!3m2!1sfr!2sdz!4v1715872145612!5m2!1sfr!2sdz" style="filter: grayscale(1);"></iframe>
                 </div>
                 <div class="bg-[#E2A900] border-8 border-black p-6 neo-brutal-shadow">
                     <h3 class="heading-font text-3xl mb-6 border-b-4 border-black pb-2" data-i18n="hours_title">HORAIRES</h3>
@@ -158,7 +196,7 @@
                     <div><label class="font-bold uppercase" data-i18n="form_phone">Téléphone</label><input type="tel" id="c-phone" class="input-neo" placeholder="05XX XX XX XX"></div>
                     <div><label class="font-bold uppercase">Wilaya</label><select id="c-wilaya" class="input-neo"></select></div>
                     <div><label class="font-bold uppercase" data-i18n="form_address">Adresse</label><textarea id="c-adresse" class="input-neo" rows="3"></textarea></div>
-                    <button onclick="finaliserLaCaisse()" class="w-full bg-black text-[#E2A900] p-6 heading-font text-2xl neo-brutal-shadow-hover transition-all" data-i18n="confirm_btn">CONFIRMER LA COMMANDE</button>
+                    <button type="button" onclick="finaliserLaCaisse()" class="w-full bg-black text-[#E2A900] p-6 heading-font text-2xl neo-brutal-shadow-hover transition-all" data-i18n="confirm_btn">CONFIRMER LA COMMANDE</button>
                 </div>
             </div>
             <div id="checkout-success" class="hidden text-center py-10">
@@ -168,7 +206,7 @@
                 </div>
                 <div class="flex flex-col gap-4">
                     <button onclick="showView('orders')" class="bg-white text-black border-4 border-black px-8 py-4 heading-font neo-brutal-shadow-sm">VOIR MA COMMANDE</button>
-                    <button onclick="showView('home')" class="bg-black text-white px-8 py-4 heading-font neo-brutal-shadow-sm" data-i18n="back_stadium">RETOUR AU STADE</button>
+                    <button onclick="resetCheckoutForm()" class="bg-black text-white px-8 py-4 heading-font neo-brutal-shadow-sm" data-i18n="back_stadium">RETOUR AU STADE</button>
                 </div>
             </div>
         </div>
@@ -180,7 +218,6 @@
     </footer>
 
     <script>
-        // CONFIG FIREBASE
         const firebaseConfig = {
             apiKey: "AIzaSyCrEd8zSy5bBape6ws3v7mvTavcZfhCKM8",
             authDomain: "r10-store-f6bb3.firebaseapp.com",
@@ -192,6 +229,8 @@
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
+        const auth = firebase.auth();
+        const googleProvider = new firebase.auth.GoogleAuthProvider();
 
         const translations = {
             fr: {
@@ -219,14 +258,88 @@
         };
 
         let currentLang = 'fr';
-        let products = []; // Sera rempli par Firebase
-        const wilayas = ["01 Adrar", "02 Chlef", "03 Laghouat", "04 Oum El Bouaghi", "05 Batna", "06 Béjaïa", "07 Biskra", "08 Béchar", "09 Blida", "10 Bouira", "11 Tamanrasset", "12 Tébessa", "13 Tlemcen", "14 Tiaret", "15 Tizi Ouzou", "16 Alger", "17 Djelfa", "18 Jijel", "19 Sétif", "20 Saïda", "21 Skikda", "22 Sidi Bel Abbès", "23 Annaba", "24 Guelma", "25 Constantine", "26 Médéa", "27 Mostaganem", "28 M'Sila", "29 Mascara", "30 Ouargla", "31 Oran", "32 El Bayadh", "33 Illizi", "34 Bordj Bou Arreridj", "35 Boumerdès", "36 El Tarf", "37 Tindouf", "38 Tissemsilt", "39 El Oued", "40 Khenchela", "41 Souk Ahras", "42 Tipaza", "43 Mila", "44 Aïn Defla", "45 Naâma", "46 Aïn Témouchent", "47 Ghardaïa", "48 Relizane", "49 El M'Ghair", "50 El Meniaa", "51 Ouled Djellal", "52 Bordj Baji Mokhtar", "53 Béni Abbès", "54 Timimoun", "55 Touggourt", "56 Djanet", "57 In Salah", "58 In Guezzam"];
-        
+        let products = [];
         let cart = [];
         let selectedSize = null;
-        let myOrders = JSON.parse(localStorage.getItem('r10_orders')) || [];
+        let currentUser = null;
+        const wilayas = ["01 Adrar", "02 Chlef", "03 Laghouat", "04 Oum El Bouaghi", "05 Batna", "06 Béjaïa", "07 Biskra", "08 Béchar", "09 Blida", "10 Bouira", "11 Tamanrasset", "12 Tébessa", "13 Tlemcen", "14 Tiaret", "15 Tizi Ouzou", "16 Alger", "17 Djelfa", "18 Jijel", "19 Sétif", "20 Saïda", "21 Skikda", "22 Sidi Bel Abbès", "23 Annaba", "24 Guelma", "25 Constantine", "26 Médéa", "27 Mostaganem", "28 M'Sila", "29 Mascara", "30 Ouargla", "31 Oran", "32 El Bayadh", "33 Illizi", "34 Bordj Bou Arreridj", "35 Boumerdès", "36 El Tarf", "37 Tindouf", "38 Tissemsilt", "39 El Oued", "40 Khenchela", "41 Souk Ahras", "42 Tipaza", "43 Mila", "44 Aïn Defla", "45 Naâma", "46 Aïn Témouchent", "47 Ghardaïa", "48 Relizane", "49 El M'Ghair", "50 El Meniaa", "51 Ouled Djellal", "52 Bordj Baji Mokhtar", "53 Béni Abbès", "54 Timimoun", "55 Touggourt", "56 Djanet", "57 In Salah", "58 In Guezzam"];
 
-        // LIRE LES PRODUITS FIREBASE
+        // VIDER HISTORIQUE (Pour repartir à zéro comme sur la photo)
+        if (!localStorage.getItem('r10_reset_v5')) {
+            localStorage.removeItem('r10_orders');
+            localStorage.setItem('r10_reset_v5', 'true');
+        }
+
+        // AUTH
+        auth.onAuthStateChanged(user => {
+            currentUser = user;
+            if (user) {
+                document.getElementById('sidebar-auth-logged-out').classList.add('hidden');
+                document.getElementById('sidebar-auth-logged-in').classList.remove('hidden');
+                document.getElementById('sidebar-user-email').innerText = user.email;
+                document.getElementById('not-connected-msg').classList.add('hidden');
+                loadUserData(user.uid);
+            } else {
+                document.getElementById('sidebar-auth-logged-out').classList.remove('hidden');
+                document.getElementById('sidebar-auth-logged-in').classList.add('hidden');
+                document.getElementById('not-connected-msg').classList.remove('hidden');
+                // AFFICHE LE MESSAGE VIDE PAR DEFAUT
+                document.getElementById('orders-list').innerHTML = `
+                    <div class="p-12 border-4 border-dashed border-black text-center font-bold text-2xl uppercase opacity-50">
+                        AUCUNE COMMANDE POUR LE MOMENT
+                    </div>`;
+            }
+        });
+
+        async function loadUserData(uid) {
+            const doc = await db.collection("users").doc(uid).get();
+            if (doc.exists) {
+                const d = doc.data();
+                if(document.getElementById('c-nom')) {
+                    document.getElementById('c-nom').value = d.nom || "";
+                    document.getElementById('c-prenom').value = d.prenom || "";
+                    document.getElementById('c-phone').value = d.phone || "";
+                    document.getElementById('c-wilaya').value = d.wilaya || "";
+                    document.getElementById('c-adresse').value = d.adresse || "";
+                }
+            }
+        }
+
+        let authMode = 'login';
+        function toggleAuthMode(mode) {
+            authMode = mode;
+            const btn = document.getElementById('auth-action-btn');
+            if (mode === 'login') {
+                document.getElementById('btn-login-mode').classList.add('bg-black', 'text-white');
+                document.getElementById('btn-signup-mode').classList.remove('bg-black', 'text-white');
+                btn.innerText = "SE CONNECTER";
+            } else {
+                document.getElementById('btn-login-mode').classList.remove('bg-black', 'text-white');
+                document.getElementById('btn-signup-mode').classList.add('bg-black', 'text-white');
+                btn.innerText = "S'INSCRIRE";
+            }
+        }
+
+        async function handleEmailAuth() {
+            const email = document.getElementById('auth-email').value;
+            const pass = document.getElementById('auth-pass').value;
+            try {
+                if (authMode === 'login') await auth.signInWithEmailAndPassword(email, pass);
+                else await auth.createUserWithEmailAndPassword(email, pass);
+                showView('home');
+            } catch (e) { alert("Erreur: " + e.message); }
+        }
+
+        async function loginGoogle() {
+            try {
+                await auth.signInWithPopup(googleProvider);
+                showView('home');
+            } catch (e) { alert("Erreur Google: " + e.message); }
+        }
+
+        function logout() { auth.signOut(); showView('home'); }
+
+        // CATALOGUE
         db.collection("products").onSnapshot((snapshot) => {
             products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             renderCatalog();
@@ -236,6 +349,7 @@
             currentLang = currentLang === 'fr' ? 'en' : 'fr';
             document.getElementById('langBtn').innerText = currentLang === 'fr' ? 'EN' : 'FR';
             applyTranslations();
+            renderCatalog(); 
         }
 
         function applyTranslations() {
@@ -273,86 +387,62 @@
         function renderCatalog() {
             const list = document.getElementById('product-list');
             if (list) {
-                list.innerHTML = products.map(p => `
-                    <div class="bg-white border-4 border-black p-6 neo-brutal-shadow-hover flex flex-col cursor-pointer" onclick="renderProductDetail('${p.id}')">
-                        <img src="${p.img}" class="w-full h-64 object-cover mb-4 border-4 border-black" onerror="this.src='https://via.placeholder.com/400x400?text=Sneakers'">
+                list.innerHTML = products.map(p => {
+                    const isOutOfStock = p.stock <= 0;
+                    return `
+                    <div class="bg-white border-4 border-black p-6 neo-brutal-shadow-hover flex flex-col cursor-pointer relative" onclick="${isOutOfStock ? '' : `renderProductDetail('${p.id}')`}">
+                        ${isOutOfStock ? '<div class="sold-out-badge">STOCK ÉPUISÉ</div>' : ''}
+                        <img src="${p.img}" class="w-full h-64 object-cover mb-4 border-4 border-black ${isOutOfStock ? 'grayscale-img' : ''}" onerror="this.src='https://via.placeholder.com/400x400?text=Sneakers'">
                         <h4 class="heading-font text-2xl">${p.name}</h4>
                         <p class="font-black text-xl">${p.price} DA</p>
-                    </div>`).join('');
+                    </div>`;
+                }).join('');
             }
         }
 
         function renderProductDetail(id) {
             const p = products.find(x => x.id === id);
+            const isOutOfStock = p.stock <= 0;
             selectedSize = null;
             document.getElementById('product-detail-container').innerHTML = `
                 <button onclick="showView('home')" class="mb-12 bg-black text-white p-4 heading-font neo-brutal-shadow-sm">${translations[currentLang].back_btn}</button>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-                    <img src="${p.img}" class="border-8 border-black neo-brutal-shadow rotate-[-2deg]" onerror="this.src='https://via.placeholder.com/800x800?text=Sneakers'">
+                    <img src="${p.img}" class="border-8 border-black neo-brutal-shadow rotate-[-2deg] ${isOutOfStock ? 'grayscale-img' : ''}" onerror="this.src='https://via.placeholder.com/800x800?text=Sneakers'">
                     <div class="bg-black text-[#E2A900] p-10 border-8 border-white neo-brutal-shadow">
                         <h2 class="heading-font text-5xl mb-4">${p.name}</h2>
-                        <p class="mb-6 font-bold text-lg">${p.longDesc}</p>
+                        <p class="mb-6 font-bold text-lg">${isOutOfStock ? (currentLang === 'fr' ? 'Stock épuisé' : 'Out of Stock') : p.longDesc}</p>
                         <div class="flex flex-wrap gap-2 mb-8">
-                            ${[40,41,42,43,44,45].map(s => `<button onclick="selectSize(${s})" data-size="${s}" class="size-btn border-2 border-white px-4 py-2 text-white font-bold hover:bg-white hover:text-black transition-colors">${s}</button>`).join('')}
+                            ${(p.sizes || []).map(s => `<button onclick="${isOutOfStock ? '' : `selectSize('${s}')`}" data-size="${s}" class="size-btn border-2 border-white px-4 py-2 text-white font-bold ${isOutOfStock ? 'opacity-30 cursor-not-allowed' : 'hover:bg-white hover:text-black transition-colors'}">${s}</button>`).join('')}
                         </div>
-                        <button onclick="addToCart('${p.id}')" class="w-full bg-[#E2A900] text-black p-6 heading-font text-2xl neo-brutal-shadow-hover">${translations[currentLang].add_to_cart}</button>
+                        <button onclick="${isOutOfStock ? '' : `addToCart('${p.id}')`}" class="w-full ${isOutOfStock ? 'bg-gray-600 cursor-not-allowed' : 'bg-[#E2A900] text-black neo-brutal-shadow-hover'} p-6 heading-font text-2xl">
+                            ${isOutOfStock ? (currentLang === 'fr' ? 'STOCK ÉPUISÉ' : 'OUT OF STOCK') : translations[currentLang].add_to_cart}
+                        </button>
                     </div>
                 </div>`;
             showView('product');
         }
 
-        function selectSize(s) {
-            selectedSize = s;
-            document.querySelectorAll('.size-btn').forEach(b => b.classList.toggle('size-selected', b.dataset.size == s));
-        }
-
-        function addToCart(id) {
-            if(!selectedSize) {
-                showToast(currentLang === 'fr' ? "Choisis une pointure !" : "Choose a size !");
-                return;
-            }
-            const p = products.find(x => x.id === id);
-            cart.push({...p, size: selectedSize});
-            updateCartCount(); toggleCart(true);
-        }
-
+        function selectSize(s) { selectedSize = s; document.querySelectorAll('.size-btn').forEach(b => b.classList.toggle('size-selected', b.dataset.size == s)); }
+        function addToCart(id) { if(!selectedSize) { alert("Choisis une pointure !"); return; } const p = products.find(x => x.id === id); cart.push({...p, size: selectedSize}); updateCartCount(); toggleCart(true); }
         function updateCartCount() { document.getElementById('cart-count').innerText = cart.length; }
-
         function renderSidebarCart() {
             const cont = document.getElementById('sidebar-cart-items');
-            const foot = document.getElementById('sidebar-cart-footer');
-            if(cart.length === 0) { cont.innerHTML= `<div class='text-center py-10 opacity-50'>${currentLang === 'fr' ? 'TON PANIER EST VIDE' : 'EMPTY CART'}</div>`; foot.style.display='none'; return; }
-            foot.style.display='block';
+            if(cart.length === 0) { cont.innerHTML= `<div class='text-center py-10 opacity-50'>${currentLang === 'fr' ? 'TON PANIER EST VIDE' : 'EMPTY CART'}</div>`; return; }
             let total = 0;
-            cont.innerHTML = cart.map((i, index) => { 
-                total+=i.price; 
-                return `
-                <div class="border-4 border-black p-4 mb-2 bg-gray-50 flex justify-between items-center">
-                    <div>
-                        <b class="block">${i.name}</b>
-                        <span class="text-sm">Taille: ${i.size}</span>
-                    </div>
-                    <div class="flex items-center gap-4">
-                        <span>${i.price} DA</span>
-                        <button onclick="removeFromCart(${index})" class="text-red-600 border-2 border-black px-2 hover:bg-black hover:text-white transition-colors">X</button>
-                    </div>
-                </div>` 
-            }).join('');
+            cont.innerHTML = cart.map((i, index) => { total+=i.price; return `<div class="border-4 border-black p-4 mb-2 bg-gray-50 flex justify-between items-center"><div><b class="block">${i.name}</b><span class="text-sm">Taille: ${i.size}</span></div><div class="flex items-center gap-4"><span>${i.price} DA</span><button onclick="removeFromCart(${index})" class="text-red-600 border-2 border-black px-2 hover:bg-black hover:text-white">X</button></div></div>` }).join('');
             document.getElementById('sidebar-total').innerText = total + " DA";
         }
+        function removeFromCart(index) { cart.splice(index, 1); updateCartCount(); renderSidebarCart(); }
+        function goToCheckout() { if(cart.length === 0) return; toggleCart(false); showView('checkout'); if(currentUser) loadUserData(currentUser.uid); }
 
-        function removeFromCart(index) {
-            cart.splice(index, 1);
-            updateCartCount();
-            renderSidebarCart();
+        function resetCheckoutForm() {
+            showView('home');
+            setTimeout(() => {
+                document.getElementById('checkout-form-container').classList.remove('hidden');
+                document.getElementById('checkout-success').classList.add('hidden');
+            }, 500);
         }
 
-        function goToCheckout() {
-            if(cart.length === 0) return;
-            toggleCart(false); showView('checkout');
-        }
-
-        // ENVOYER COMMANDE FIREBASE
         async function finaliserLaCaisse() {
             const nom = document.getElementById('c-nom').value;
             const prenom = document.getElementById('c-prenom').value;
@@ -360,12 +450,10 @@
             const wilaya = document.getElementById('c-wilaya').value;
             const adresse = document.getElementById('c-adresse').value;
 
-            if(!num || !nom) {
-                showToast("Veuillez remplir les informations !");
-                return;
-            }
+            if(!num || !nom) return alert("Veuillez remplir les informations !");
 
             const orderData = {
+                userId: currentUser ? currentUser.uid : "guest",
                 client: nom + " " + prenom,
                 phone: num,
                 wilaya: wilaya,
@@ -373,83 +461,74 @@
                 items: cart,
                 total: cart.reduce((acc, curr) => acc + curr.price, 0),
                 status: "En attente de rappel",
-                date: new Date().toLocaleString('fr-FR')
+                date: new Date().toLocaleString('fr-FR'),
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
             };
 
-            // Ajouter à Firebase
-            const docRef = await db.collection("orders").add(orderData);
+            if(currentUser) await db.collection("users").doc(currentUser.uid).set({ nom, prenom, phone: num, wilaya, adresse }, { merge: true });
 
-            // Sauvegarder ID localement pour historique
-            myOrders.unshift({id: docRef.id, ...orderData});
-            localStorage.setItem('r10_orders', JSON.stringify(myOrders));
-
-            document.getElementById('checkout-form-container').classList.add('hidden');
-            document.getElementById('res-num').innerText = num;
-            document.getElementById('checkout-success').classList.remove('hidden');
-            
-            cart = []; 
-            updateCartCount();
+            try {
+                await db.collection("orders").add(orderData);
+                document.getElementById('checkout-form-container').classList.add('hidden');
+                document.getElementById('res-num').innerText = num;
+                document.getElementById('checkout-success').classList.remove('hidden');
+                cart = []; updateCartCount();
+            } catch(e) {
+                alert("Erreur de commande : " + e.message);
+            }
         }
 
+        // --- AFFICHAGE AVEC TRI CÔTÉ CLIENT (POUR EVITER L'ERREUR D'INDEX) ---
         function renderOrders() {
-            const list = document.getElementById('orders-list');
-            if (myOrders.length === 0) {
-                list.innerHTML = `<div class="p-12 border-4 border-dashed border-black text-center font-bold text-2xl uppercase opacity-50">Aucune commande pour le moment</div>`;
-                return;
-            }
+            if (!currentUser) return;
+            
+            // On enlève le orderBy("timestamp") qui faisait planter l'affichage vide
+            db.collection("orders")
+              .where("userId", "==", currentUser.uid)
+              .onSnapshot(snapshot => {
+                const list = document.getElementById('orders-list');
+                
+                if(snapshot.empty) {
+                    list.innerHTML = `<div class="p-12 border-4 border-dashed border-black text-center font-bold text-2xl uppercase opacity-50">AUCUNE COMMANDE POUR LE MOMENT</div>`;
+                    return;
+                }
 
-            list.innerHTML = myOrders.map(order => `
-                <div class="border-8 border-black p-6 neo-brutal-shadow bg-white">
-                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 border-b-4 border-black pb-4">
-                        <div>
-                            <p class="text-sm font-bold opacity-50">COMMANDE #${order.id.substring(0,6)}</p>
-                            <p class="heading-font text-xl">${order.date}</p>
+                // On trie manuellement ici
+                let docs = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
+                docs.sort((a, b) => (b.timestamp ? b.timestamp.seconds : 0) - (a.timestamp ? a.timestamp.seconds : 0));
+
+                list.innerHTML = docs.map(order => {
+                    let statusClass = "bg-black text-[#E2A900]";
+                    let statusText = order.status;
+
+                    if(order.status === "Confirmé") {
+                        statusText = "✅ COMMANDE ACCEPTÉE";
+                        statusClass = "bg-green-600 text-white border-2 border-black";
+                    } else if (order.status === "Rejeté") {
+                        statusText = "❌ COMMANDE REFUSÉE";
+                        statusClass = "bg-red-600 text-white border-2 border-black";
+                    }
+
+                    return `
+                    <div class="border-8 border-black p-6 neo-brutal-shadow bg-white">
+                        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 border-b-4 border-black pb-4">
+                            <div><p class="text-sm font-bold opacity-50">COMMANDE #${order.id.substring(0,6)}</p><p class="heading-font text-xl">${order.date}</p></div>
+                            <div class="${statusClass} px-4 py-2 font-black uppercase text-sm italic">${statusText}</div>
                         </div>
-                        <div class="bg-black text-[#E2A900] px-4 py-2 font-black uppercase text-sm italic">
-                            ${order.status}
-                        </div>
-                    </div>
-                    <div class="space-y-4 mb-6">
-                        ${order.items.map(item => `
-                            <div class="flex justify-between items-center font-bold">
-                                <span>${item.name} (Taille: ${item.size})</span>
-                                <span>${item.price} DA</span>
-                            </div>
-                        `).join('')}
-                    </div>
-                    <div class="flex justify-between items-center pt-4 border-t-4 border-black font-black text-2xl heading-font">
-                        <span>TOTAL</span>
-                        <span>${order.total} DA</span>
-                    </div>
-                </div>
-            `).join('');
+                        <div class="space-y-4 mb-6">${order.items.map(item => `<div class="flex justify-between items-center font-bold"><span>${item.name} (T: ${item.size})</span><span>${item.price} DA</span></div>`).join('')}</div>
+                        <div class="flex justify-between items-center pt-4 border-t-4 border-black font-black text-2xl heading-font"><span>TOTAL</span><span>${order.total} DA</span></div>
+                    </div>`;
+                }).join('');
+            });
         }
 
-        function showToast(msg) {
-            const modal = document.createElement('div');
-            modal.className = "fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-black text-white p-8 border-4 border-[#E2A900] z-[100] heading-font neo-brutal-shadow text-center";
-            modal.innerHTML = `<p class="mb-4">${msg}</p><button onclick="this.parentElement.remove()" class="bg-[#E2A900] text-black px-4 py-2">OK</button>`;
-            document.body.appendChild(modal);
-        }
-
-        // Remplissage Wilayas
-        const selectW = document.getElementById('c-wilaya');
-        if (selectW) {
-            wilayas.forEach(w => { let opt = document.createElement('option'); opt.value = w; opt.innerHTML = w; selectW.appendChild(opt); });
-        }
-
-        // Curseur Custom
-        document.addEventListener('mousemove', (e) => {
-            const c = document.getElementById('cursor');
-            if(c) { 
-                c.style.left = e.clientX + 'px';  
-                c.style.top = e.clientY + 'px'; 
-            }
-        });
-
-        window.onload = () => { 
+        window.onload = () => {
+            const selectW = document.getElementById('c-wilaya');
+            if(selectW) wilayas.forEach(w => { let opt = document.createElement('option'); opt.value = w; opt.innerHTML = w; selectW.appendChild(opt); });
+            document.addEventListener('mousemove', (e) => { const c = document.getElementById('cursor'); if(c) { c.style.left = e.clientX + 'px'; c.style.top = e.clientY + 'px'; } });
+            
             renderHours(); 
-            applyTranslations();
+            applyTranslations(); 
             updateCartCount();
         };
     </script>
