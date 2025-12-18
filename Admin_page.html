@@ -56,7 +56,7 @@
                     <label class="block font-bold">Description</label>
                     <textarea id="p-desc" class="input-neo" rows="3"></textarea>
                     
-                    <button onclick="addProduct()" class="w-full bg-black text-white p-3 font-black uppercase">Mettre en rayon</button>
+                    <button type="button" onclick="addProduct()" class="w-full bg-black text-white p-3 font-black uppercase">Mettre en rayon</button>
                 </div>
 
                 <div class="lg:col-span-2">
@@ -76,7 +76,7 @@
         // ==========================================
         // 🔐 VERROU DE SÉCURITÉ ADMIN
         // ==========================================
-        const ADMIN_PASSWORD = "Ronaldinhoailliergauche"; // <--- CHANGE TON MOT DE PASSE ICI
+        const ADMIN_PASSWORD = "Ronaldinhoailliergauche"; 
         
         const access = prompt("Accès réservé au propriétaire. Entrez le mot de passe :");
         if (access !== ADMIN_PASSWORD) {
@@ -104,27 +104,41 @@
 
         // 2. AJOUTER PRODUIT FIREBASE
         async function addProduct() {
-            const name = document.getElementById('p-name').value;
-            const price = parseInt(document.getElementById('p-price').value);
-            const img = document.getElementById('p-img').value;
-            const desc = document.getElementById('p-desc').value;
+            const nameInput = document.getElementById('p-name');
+            const priceInput = document.getElementById('p-price');
+            const imgInput = document.getElementById('p-img');
+            const descInput = document.getElementById('p-desc');
+
+            const name = nameInput.value;
+            const price = parseInt(priceInput.value);
+            const img = imgInput.value;
+            const desc = descInput.value;
 
             if(!name || !price) return alert("Nom et prix requis !");
 
-            await db.collection("products").add({
-                name: name,
-                price: price,
-                img: img || "https://via.placeholder.com/400",
-                longDesc: desc,
-                createdAt: new Date()
-            });
+            try {
+                await db.collection("products").add({
+                    name: name,
+                    price: price,
+                    img: img || "https://via.placeholder.com/400",
+                    longDesc: desc,
+                    createdAt: new Date()
+                });
 
-            alert("Produit ajouté !");
-            document.querySelectorAll('.input-neo').forEach(i => i.value = "");
+                alert("Produit ajouté !");
+                
+                // On vide les champs après l'ajout réussi
+                nameInput.value = "";
+                priceInput.value = "";
+                imgInput.value = "";
+                descInput.value = "";
+            } catch (e) {
+                alert("Erreur Firebase : " + e.message);
+            }
         }
 
         // 3. ÉCOUTER PRODUITS
-        db.collection("products").onSnapshot(snap => {
+        db.collection("products").orderBy("createdAt", "desc").onSnapshot(snap => {
             const list = document.getElementById('admin-product-list');
             list.innerHTML = snap.docs.map(doc => {
                 const p = doc.data();
