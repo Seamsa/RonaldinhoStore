@@ -38,18 +38,6 @@
         .grayscale-img { filter: grayscale(1); opacity: 0.6; }
         .size-unavailable { background-color: #ff0000; color: white; text-decoration: line-through; opacity: 0.5; cursor: not-allowed; border-color: #ff0000; }
 
-        /* --- ANIMATION MARQUEE (LIGNE BLANCHE) --- */
-        .marquee {
-            white-space: nowrap;
-            overflow: hidden;
-            display: inline-block;
-            animation: marquee 20s linear infinite;
-        }
-        @keyframes marquee {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-50%); }
-        }
-
         /* --- STYLE DES CATEGORIES --- */
         .category-card { 
             position: relative; 
@@ -61,9 +49,11 @@
         }
         .cat-bg {
             position: absolute; inset: 0; background-size: cover; background-position: center;
+            /* LE FILTRE "ESPRIT DU SITE" : Noir & Blanc + Contraste fort */
             filter: grayscale(100%) contrast(120%) brightness(0.8);
             transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94), filter 0.6s ease;
         }
+        /* Au survol : Retour couleur + Zoom */
         .category-card:hover .cat-bg { transform: scale(1.1); filter: grayscale(0%) contrast(100%) brightness(1); }
         .cat-overlay { position: absolute; inset: 0; background: linear-gradient(to top, black 10%, transparent 60%); opacity: 0.9; }
         .cat-content { position: absolute; bottom: 30px; left: 30px; z-index: 10; }
@@ -142,15 +132,6 @@
                 <p class="text-xl md:text-2xl font-bold uppercase italic" data-i18n="quote">"L'art du dribble commence par le bon appui."</p>
                 <div onclick="document.getElementById('catalog').scrollIntoView()" class="absolute -bottom-6 -right-6 bg-[#E2A900] border-4 border-black p-4 heading-font animate-bounce cursor-pointer hover:bg-black hover:text-white transition-colors" data-i18n="shop_btn">SHOP KICKS ↓</div>
             </div>
-
-            <!-- LIGNE BLANCHE ANIMÉE (MARQUEE) AJOUTÉE ICI -->
-            <div class="absolute bottom-10 w-full border-y-4 border-black bg-white overflow-hidden py-4 -rotate-1">
-                <div class="marquee flex gap-10 items-center">
-                    <span class="heading-font text-4xl text-black">★ URBAN LEGEND ★ PITCH CONTROL ★ STREET FLOW ★ SOLE OF THE GAME ★ SKILLS & KICKS ★</span>
-                    <span class="heading-font text-4xl text-black">★ URBAN LEGEND ★ PITCH CONTROL ★ STREET FLOW ★ SOLE OF THE GAME ★ SKILLS & KICKS ★</span>
-                </div>
-            </div>
-
         </header>
 
         <section id="catalog" class="py-32 px-4 bg-[#E2A900]">
@@ -324,8 +305,6 @@
         let currentUser = null;
         const wilayas = ["01 Adrar", "02 Chlef", "03 Laghouat", "04 Oum El Bouaghi", "05 Batna", "06 Béjaïa", "07 Biskra", "08 Béchar", "09 Blida", "10 Bouira", "11 Tamanrasset", "12 Tébessa", "13 Tlemcen", "14 Tiaret", "15 Tizi Ouzou", "16 Alger", "17 Djelfa", "18 Jijel", "19 Sétif", "20 Saïda", "21 Skikda", "22 Sidi Bel Abbès", "23 Annaba", "24 Guelma", "25 Constantine", "26 Médéa", "27 Mostaganem", "28 M'Sila", "29 Mascara", "30 Ouargla", "31 Oran", "32 El Bayadh", "33 Illizi", "34 Bordj Bou Arreridj", "35 Boumerdès", "36 El Tarf", "37 Tindouf", "38 Tissemsilt", "39 El Oued", "40 Khenchela", "41 Souk Ahras", "42 Tipaza", "43 Mila", "44 Aïn Defla", "45 Naâma", "46 Aïn Témouchent", "47 Ghardaïa", "48 Relizane", "49 El M'Ghair", "50 El Meniaa", "51 Ouled Djellal", "52 Bordj Baji Mokhtar", "53 Béni Abbès", "54 Timimoun", "55 Touggourt", "56 Djanet", "57 In Salah", "58 In Guezzam"];
 
-        if (!localStorage.getItem('r10_reset_v7')) { localStorage.removeItem('r10_orders'); localStorage.setItem('r10_reset_v7', 'true'); }
-
         auth.onAuthStateChanged(user => {
             currentUser = user;
             if (user) {
@@ -455,14 +434,37 @@
         function updateCartCount() { document.getElementById('cart-count').innerText = cart.length; }
         function renderSidebarCart() { const cont = document.getElementById('sidebar-cart-items'); if(cart.length === 0) { cont.innerHTML= `<div class='text-center py-10 opacity-50'>${currentLang === 'fr' ? 'TON PANIER EST VIDE' : 'EMPTY CART'}</div>`; return; } let total = 0; cont.innerHTML = cart.map((i, index) => { total+=i.price; return `<div class="border-4 border-black p-4 mb-2 bg-gray-50 flex justify-between items-center"><div><b class="block">${i.name}</b><span class="text-sm">Taille: ${i.size}</span></div><div class="flex items-center gap-4"><span>${i.price} DA</span><button onclick="removeFromCart(${index})" class="text-red-600 border-2 border-black px-2 hover:bg-black hover:text-white">X</button></div></div>` }).join(''); document.getElementById('sidebar-total').innerText = total + " DA"; }
         function removeFromCart(index) { cart.splice(index, 1); updateCartCount(); renderSidebarCart(); }
-        function goToCheckout() { if(cart.length === 0) return; toggleCart(false); showView('checkout'); if(currentUser) loadUserData(currentUser.uid); }
+        function goToCheckout() { 
+            if(cart.length === 0) return; 
+            toggleCart(false); 
+            showView('checkout'); 
+            
+            // On ne pre-remplit que si un utilisateur est connecté
+            if(currentUser) loadUserData(currentUser.uid); 
+            else {
+                // Pour les invités, on s'assure que les champs sont vides
+                if(document.getElementById('c-nom')) {
+                    document.getElementById('c-nom').value = "";
+                    document.getElementById('c-prenom').value = "";
+                    document.getElementById('c-phone').value = "";
+                    document.getElementById('c-wilaya').value = "";
+                    document.getElementById('c-adresse').value = "";
+                }
+            }
+        }
+        
         function resetCheckoutForm() { showView('home'); setTimeout(() => { document.getElementById('checkout-form-container').classList.remove('hidden'); document.getElementById('checkout-success').classList.add('hidden'); }, 500); }
 
         async function finaliserLaCaisse() {
             const nom = document.getElementById('c-nom').value; const prenom = document.getElementById('c-prenom').value; const num = document.getElementById('c-phone').value; const wilaya = document.getElementById('c-wilaya').value; const adresse = document.getElementById('c-adresse').value;
             if(!num || !nom) return alert("Veuillez remplir les informations !");
+            
+            // On ne sauvegarde rien en local
             const orderData = { userId: currentUser ? currentUser.uid : "guest", client: nom + " " + prenom, phone: num, wilaya: wilaya, adresse: adresse, items: cart, total: cart.reduce((acc, curr) => acc + curr.price, 0), status: "En attente de rappel", date: new Date().toLocaleString('fr-FR'), timestamp: firebase.firestore.FieldValue.serverTimestamp() };
+            
+            // Sauvegarder profil uniquement si connecté
             if(currentUser) await db.collection("users").doc(currentUser.uid).set({ nom, prenom, phone: num, wilaya, adresse }, { merge: true });
+            
             try { await db.collection("orders").add(orderData); document.getElementById('checkout-form-container').classList.add('hidden'); document.getElementById('res-num').innerText = num; document.getElementById('checkout-success').classList.remove('hidden'); cart = []; updateCartCount(); } catch(e) { alert("Erreur de commande : " + e.message); }
         }
 
