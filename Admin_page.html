@@ -20,6 +20,7 @@
         .sidebar { background: var(--dark); color: var(--primary); }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
+        .size-checkbox:checked + span { color: red; text-decoration: line-through; font-weight: bold; }
     </style>
 </head>
 <body class="flex min-h-screen">
@@ -37,23 +38,38 @@
     <main class="flex-grow p-10">
         <section id="inventory" class="tab-content active">
             <h2 class="heading-font text-4xl mb-8">Gestion du Stock</h2>
+            
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
                 <div class="admin-card neo-brutal-shadow bg-[#E2A900]">
                     <h3 class="heading-font text-xl mb-4">Ajouter un Produit</h3>
+                    
                     <label class="block font-bold">Nom du modèle</label>
                     <input type="text" id="p-name" class="input-neo" placeholder="Ex: R10 Gold '05">
+                    
+                    <label class="block font-bold">Catégorie</label>
+                    <select id="p-category" class="input-neo bg-white">
+                        <option value="sneakers">OWN THE STREETS</option>
+                        <option value="street">DOMINATE THE FIELD</option>
+                    </select>
+
                     <label class="block font-bold">Prix (DA)</label>
                     <input type="number" id="p-price" class="input-neo" placeholder="18000">
-                    <label class="block font-bold">Pointures (40, 41...)</label>
+                    
+                    <label class="block font-bold">Pointures (ex: 40, 41, 42)</label>
                     <input type="text" id="p-sizes" class="input-neo" placeholder="40, 41, 42">
-                    <label class="block font-bold">Stock Initial</label>
+                    
+                    <label class="block font-bold">Stock Global</label>
                     <input type="number" id="p-stock" class="input-neo" placeholder="10">
+                    
                     <label class="block font-bold">URL Image</label>
                     <input type="text" id="p-img" class="input-neo" placeholder="Lien de la photo">
+                    
                     <label class="block font-bold">Description</label>
                     <textarea id="p-desc" class="input-neo" rows="2"></textarea>
+                    
                     <button type="button" onclick="addProduct()" class="w-full bg-black text-white p-3 font-black uppercase">Mettre en rayon</button>
                 </div>
+
                 <div class="lg:col-span-2">
                     <div id="admin-product-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
                 </div>
@@ -69,9 +85,16 @@
     <script>
         const ADMIN_PASSWORD = "123"; 
         const access = prompt("Accès réservé au propriétaire. Entrez le mot de passe :");
+        
         if (access !== ADMIN_PASSWORD) {
-            alert("Accès refusé !");
-            window.location.href = "index.html";
+            document.body.innerHTML = `
+                <div class="flex flex-col items-center justify-center h-screen bg-red-100">
+                    <h1 class="text-4xl font-black text-red-600 mb-4 heading-font">ACCÈS REFUSÉ ⛔</h1>
+                    <p class="text-xl mb-6 font-bold">Mot de passe incorrect.</p>
+                    <button onclick="location.reload()" class="bg-black text-white px-8 py-4 font-black border-4 border-black hover:bg-white hover:text-black transition-all neo-brutal-shadow">RÉESSAYER</button>
+                </div>
+            `;
+            throw new Error("Mot de passe incorrect");
         }
 
         const firebaseConfig = {
@@ -92,8 +115,9 @@
 
         async function addProduct() {
             const name = document.getElementById('p-name').value;
+            const category = document.getElementById('p-category').value;
             const price = parseInt(document.getElementById('p-price').value);
-            const sizes = document.getElementById('p-sizes').value.split(',').map(s => s.trim());
+            const sizes = document.getElementById('p-sizes').value.split(',').map(s => s.trim()).filter(s => s !== "");
             const stock = parseInt(document.getElementById('p-stock').value);
             const img = document.getElementById('p-img').value;
             const desc = document.getElementById('p-desc').value;
@@ -101,10 +125,23 @@
             if(!name || !price || isNaN(stock)) return alert("Champs requis !");
 
             await db.collection("products").add({
-                name, price, sizes, stock, img: img || "https://via.placeholder.com/400", longDesc: desc, createdAt: new Date()
+                name, category, price, sizes, stock, 
+                img: img || "https://via.placeholder.com/400", 
+                longDesc: desc, 
+                createdAt: new Date(),
+                unavailableSizes: [] 
             });
             alert("Produit ajouté !");
-            document.querySelectorAll('.input-neo').forEach(i => i.value = "");
+            document.querySelectorAll('.input-neo').forEach(i => { if(i.tagName !== 'SELECT') i.value = ""; });
+        }
+
+        async function toggleSize(docId, size, isChecked) {
+            const productRef = db.collection("products").doc(docId);
+            if (isChecked) {
+                await productRef.update({ unavailableSizes: firebase.firestore.FieldValue.arrayUnion(size) });
+            } else {
+                await productRef.update({ unavailableSizes: firebase.firestore.FieldValue.arrayRemove(size) });
+            }
         }
 
         db.collection("products").orderBy("createdAt", "desc").onSnapshot(snap => {
@@ -112,22 +149,47 @@
             list.innerHTML = snap.docs.map(doc => {
                 const p = doc.data();
                 const stockColor = p.stock <= 2 ? 'text-red-600' : 'text-green-600';
+                const catName = p.category === 'street' ? 'DOMINATE THE FIELD' : 'OWN THE STREETS';
+                
+                const sizesHtml = p.sizes.map(s => {
+                    const isUnavailable = (p.unavailableSizes || []).includes(s);
+                    return `
+                        <label class="inline-flex items-center mr-3 cursor-pointer">
+                            <input type="checkbox" class="size-checkbox form-checkbox h-4 w-4 text-red-600 border-2 border-black" 
+                                onchange="toggleSize('${doc.id}', '${s}', this.checked)"
+                                ${isUnavailable ? 'checked' : ''}>
+                            <span class="ml-1 ${isUnavailable ? 'text-red-600 line-through' : ''}">${s}</span>
+                        </label>
+                    `;
+                }).join('');
+
                 return `
                 <div class="admin-card bg-white neo-brutal-shadow flex flex-col">
-                    <img src="${p.img}" class="w-full h-48 object-cover border-2 border-black mb-4">
-                    <h4 class="font-bold uppercase">${p.name}</h4>
-                    <p class="font-bold">${p.price} DA</p>
-                    <p class="text-sm">Stock: <span class="font-black ${stockColor}">${p.stock}</span></p>
-                    <button onclick="deleteProduct('${doc.id}')" class="text-red-500 underline text-xs mt-auto pt-4 text-left">Supprimer</button>
+                    <div class="flex gap-4">
+                        <img src="${p.img}" class="w-24 h-24 object-cover border-2 border-black">
+                        <div>
+                            <h4 class="font-bold uppercase text-lg">${p.name}</h4>
+                            <span class="text-xs bg-black text-[#E2A900] px-1 font-bold">${catName}</span>
+                            <p class="font-bold mt-1">${p.price} DA</p>
+                            <p class="text-sm">Stock: <span class="font-black ${stockColor}">${p.stock}</span></p>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 p-2 bg-gray-100 border-2 border-black">
+                        <p class="text-xs font-bold mb-2 uppercase">Cochez les tailles épuisées :</p>
+                        <div class="flex flex-wrap">
+                            ${sizesHtml}
+                        </div>
+                    </div>
+
+                    <button onclick="deleteProduct('${doc.id}')" class="text-red-500 underline text-xs mt-auto pt-4 text-left">Supprimer l'article</button>
                 </div>`;
             }).join('');
         });
 
-        // ACCEPTER
         async function confirmOrder(orderId, items) {
             if(!confirm("Confirmer la commande ?")) return;
             await db.collection("orders").doc(orderId).update({ status: "Confirmé" });
-
             for (const item of items) {
                 const productQuery = await db.collection("products").where("name", "==", item.name).get();
                 if (!productQuery.empty) {
@@ -140,11 +202,13 @@
             }
         }
 
-        // REJETER
         async function rejectOrder(orderId) {
             if(!confirm("Rejeter cette commande ?")) return;
             await db.collection("orders").doc(orderId).update({ status: "Rejeté" });
         }
+
+        async function deleteOrder(id) { if(confirm("Effacer définitivement ?")) await db.collection("orders").doc(id).delete(); }
+        async function deleteProduct(id) { if(confirm("Supprimer l'article ?")) await db.collection("products").doc(id).delete(); }
 
         db.collection("orders").orderBy("date", "desc").onSnapshot(snap => {
             const list = document.getElementById('admin-orders-list');
@@ -197,9 +261,6 @@
                 </div>`;
             }).join('');
         });
-
-        async function deleteProduct(id) { if(confirm("Supprimer l'article ?")) await db.collection("products").doc(id).delete(); }
-        async function deleteOrder(id) { if(confirm("Effacer définitivement ?")) await db.collection("orders").doc(id).delete(); }
     </script>
 </body>
 </html>

@@ -9,6 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Grotesk:wght@300;400;700&display=swap" rel="stylesheet">
     
+    <!-- FIREBASE SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -32,8 +33,43 @@
         #cart-overlay { opacity: 0; pointer-events: none; transition: opacity 0.3s ease; z-index: 60; }
         #cart-overlay.open { opacity: 1; pointer-events: auto; }
         .input-neo { border: 4px solid black; padding: 1rem; width: 100%; font-weight: bold; margin-top: 0.5rem; outline: none; }
+        
         .sold-out-badge { background: #ff0000; color: white; padding: 5px 10px; font-weight: 900; border: 3px solid black; position: absolute; top: 10px; right: 10px; transform: rotate(5deg); z-index: 20; }
         .grayscale-img { filter: grayscale(1); opacity: 0.6; }
+        .size-unavailable { background-color: #ff0000; color: white; text-decoration: line-through; opacity: 0.5; cursor: not-allowed; border-color: #ff0000; }
+
+        /* --- ANIMATION MARQUEE (LIGNE BLANCHE) --- */
+        .marquee {
+            white-space: nowrap;
+            overflow: hidden;
+            display: inline-block;
+            animation: marquee 20s linear infinite;
+        }
+        @keyframes marquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        /* --- STYLE DES CATEGORIES --- */
+        .category-card { 
+            position: relative; 
+            height: 450px; 
+            border: 4px solid black; 
+            overflow: hidden; 
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .cat-bg {
+            position: absolute; inset: 0; background-size: cover; background-position: center;
+            filter: grayscale(100%) contrast(120%) brightness(0.8);
+            transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94), filter 0.6s ease;
+        }
+        .category-card:hover .cat-bg { transform: scale(1.1); filter: grayscale(0%) contrast(100%) brightness(1); }
+        .cat-overlay { position: absolute; inset: 0; background: linear-gradient(to top, black 10%, transparent 60%); opacity: 0.9; }
+        .cat-content { position: absolute; bottom: 30px; left: 30px; z-index: 10; }
+        .cat-title { text-shadow: 4px 4px 0px #000; color: white; margin-bottom: 10px; }
+        .cat-btn { background: #E2A900; color: black; padding: 10px 20px; border: 2px solid black; font-weight: bold; display: inline-block; font-family: 'Archivo Black', sans-serif; box-shadow: 4px 4px 0px black; transition: transform 0.2s; }
+        .category-card:hover .cat-btn { transform: translate(-2px, -2px); box-shadow: 6px 6px 0px black; }
     </style>
 </head>
 <body class="selection:bg-black selection:text-[#E2A900]">
@@ -89,6 +125,14 @@
 
     <main id="home-view" class="view-section active">
         <header class="min-h-screen flex flex-col justify-center items-center relative pt-20 px-4 overflow-hidden">
+            <!-- IMAGE RONALDINHO INCRUSTÉE ICI (BACKGROUND) -->
+            <div class="absolute inset-0 z-0 pointer-events-none">
+                <img src="https://lh3.googleusercontent.com/rd-gg-dl/ABS2GSk40b7MgMcf19oKMhf2omM0j5WUyTJb0rmdi0wynqCr_wKKHVsXlQSginSsTZfK50GXT1jtKtZWeWO6pZo6gUGTiMqp7FjwdvSOm09iMlL4RuSUKqE9_4_mNzXljlX29_o7saLyTXmYGO7y71i8VvfwLj2FWHjaXXztm85wiFHqEjPz9ggEXHHu6muEPzroPdvvPtbqPJisrE9ZyY8ksaOHc2WSxrVp7LH2jJrUy5bBw5Dvqe6nW3uDbMjgc7KMIEyvT5Fvh0-kjcfCzlWzJTVjYaUvWp3Tx6zPAdPqfBY5VaEd14bN-HAkPMlrkIeJUmuRL3xU6BpelQ7czyI_CDtSXi4Ji4fWvNcZZcPpaC9iMGOPNqWLUWfvTvgidTUkvsTKSI-XNU9Q7V2R_8kcK6yUwts9Fnw0GOT0U31Kq2ijcUIpvtQkoHjacC6BmFaU5_W0IlSTfcjv4lNgmgm3KwaSfFIH-rL0dzkqm1N6m8siiwQouBWChyQbhamuPQ5CtcMdzml2IRFbtHmtZoEousA8wqvhQeZNnijPx9nlUttGEDpBoeZRRyel-TE0RRvrCwl-BAE4DSC8IUVTspI3P4y2K6EL-6ffZgB6owjlOK8akUiW9L7-vrngkuiI7Xv-vcUYRt_PMwqhrWmK67qzPl9KJdYibVOMYUzmG4B_gdzVLcPcmJ16alM5MBxV5DtaM0igMYQmJ7JR2YPPVm609nwINmzR0dko1XtBrPj4olwYkaYi08pr5WUQdknRdWnR7krpHnv_LzFrGNZ-iMwq5Nu8PSex_RYKrBQS7N1eO4tPeaRJgviOA5ES8AFB5BNe5eld1sq0IwNI1DUo8kBGZhEY-Jyya2AICWSWnrpAE40TOuSwutQiftmTXpY6xfRi3tbF1eHgSgFL38rNLhsrBjja8KZ1G7dLVcD2ioGwMRZ4wC3mHRpHUd7P3m8conAujZCa4XMt5LCxSnZN_m6bHTLTjkklqdftbLselOoRz-YViVFnG4MKQFSWfH_kfxzkNAE6ckqtZvcLVP-zK-skEgXW9m8BiPStz7UByxzVhes0DuQOA14Raiuz8zE6_rlVCuzvGmhym11GyGY4-71PSIX0z2DAv1LEPqS7P0bnHIU2dacM4X3del1TUphpSu8uALtBAIa_0thYqU-ESQalRCk4wrZsizOwGOOC5kRi2-JrYEvi2K3Q3yNPtTUupg9wq9cs4cOpXqIaFYIc-NIk9YaDSDOSu9JDYOYniVtXP8-Tsoyy3fg1V9v5aI6ZJ5g=s1024-rj" 
+                     class="w-full h-full object-cover opacity-60 grayscale contrast-125" 
+                     style="object-position: center 20%;"
+                     alt="Ronaldinho Background">
+            </div>
+
             <div class="relative z-10 text-center">
                 <h2 class="heading-font text-6xl md:text-[11rem] leading-none mb-4 -rotate-2 bg-black text-[#E2A900] inline-block px-8 py-4 neo-brutal-shadow" data-i18n="hero_1">LEGENDARY</h2>
                 <br>
@@ -98,18 +142,54 @@
                 <p class="text-xl md:text-2xl font-bold uppercase italic" data-i18n="quote">"L'art du dribble commence par le bon appui."</p>
                 <div onclick="document.getElementById('catalog').scrollIntoView()" class="absolute -bottom-6 -right-6 bg-[#E2A900] border-4 border-black p-4 heading-font animate-bounce cursor-pointer hover:bg-black hover:text-white transition-colors" data-i18n="shop_btn">SHOP KICKS ↓</div>
             </div>
+
+            <!-- LIGNE BLANCHE ANIMÉE (MARQUEE) AJOUTÉE ICI -->
+            <div class="absolute bottom-10 w-full border-y-4 border-black bg-white overflow-hidden py-4 -rotate-1">
+                <div class="marquee flex gap-10 items-center">
+                    <span class="heading-font text-4xl text-black">★ URBAN LEGEND ★ PITCH CONTROL ★ STREET FLOW ★ SOLE OF THE GAME ★ SKILLS & KICKS ★</span>
+                    <span class="heading-font text-4xl text-black">★ URBAN LEGEND ★ PITCH CONTROL ★ STREET FLOW ★ SOLE OF THE GAME ★ SKILLS & KICKS ★</span>
+                </div>
+            </div>
+
         </header>
 
         <section id="catalog" class="py-32 px-4 bg-[#E2A900]">
-            <h2 class="heading-font text-6xl text-center mb-20 underline decoration-8 underline-offset-8" data-i18n="catalog_title">LES_PEBITAS</h2>
-            <div id="product-list" class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8"></div>
+            <h2 class="heading-font text-6xl text-center mb-20 underline decoration-8 underline-offset-8" data-i18n="catalog_title">COLLECTION</h2>
+            
+            <div id="category-container" class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-10">
+                
+                <!-- CAT 1: OWN THE STREETS -->
+                <div onclick="openCategory('sneakers')" class="category-card neo-brutal-shadow-hover">
+                    <div class="cat-bg" style="background-image: url('https://cdn.inflact.com/media/483015756_17891217999191970_2223076410236114345_n.jpg?url=https%3A%2F%2Fscontent.cdninstagram.com%2Fv%2Ft51.2885-15%2F483015756_17891217999191970_2223076410236114345_n.jpg%3Fstp%3Ddst-jpg_e35_p1080x1080_sh0.08_tt6%26_nc_ht%3Dinstagram.fupg1-1.fna.fbcdn.net%26_nc_cat%3D106%26_nc_oc%3DQ6cZ2QFS3Tld0UosD6dhzrtTTgVDiLLW6dDNy74eGaWyAwytW-ceMib3v2eDfjRRQlwIODw%26_nc_ohc%3DLKnk29X6BVgQ7kNvwH7dmpU%26_nc_gid%3DZVP2LJHAWYCf4sW8dgbUpw%26edm%3DANTKIIoBAAAA%26ccb%3D7-5%26oh%3D00_Afkv-W7FpHYKspWqg2MiBCIAUF3ljsXRV96jGY_p8C63zw%26oe%3D694A7DC9%26_nc_sid%3Dd885a2&time=1766098800&key=c7ff73ee5f7ac5817c7ca735cf4ae39d');"></div>
+                    <div class="cat-overlay"></div>
+                    <div class="cat-content">
+                        <h3 class="cat-title heading-font text-5xl italic">OWN THE STREETS</h3>
+                        <span class="cat-btn">VOIR LES MODÈLES →</span>
+                    </div>
+                </div>
+
+                <!-- CAT 2: DOMINATE THE FIELD -->
+                <div onclick="openCategory('street')" class="category-card neo-brutal-shadow-hover">
+                    <div class="cat-bg" style="background-image: url('https://cdn.inflact.com/media/587308831_17999153318833709_5563897657014266580_n.jpg?url=https%3A%2F%2Fscontent.cdninstagram.com%2Fv%2Ft51.2885-15%2F587308831_17999153318833709_5563897657014266580_n.jpg%3Fstp%3Ddst-jpg_e35_p1080x1080_sh0.08_tt6%26_nc_ht%3Dinstagram.fqfd1-1.fna.fbcdn.net%26_nc_cat%3D105%26_nc_oc%3DQ6cZ2QFi4pOajzKUebHnr_nhBCeJhEOAZ05pVcpIUGAKHHGEI299qhW26afb8pKRYcQQm5s%26_nc_ohc%3Dl1YyJkc_CSUQ7kNvwHCbDKk%26_nc_gid%3DZZHbBuwvGoHXy8XUcXrywQ%26edm%3DANTKIIoBAAAA%26ccb%3D7-5%26oh%3D00_AfnscxaiirBSXecsB7tBJP7ExPR25dZ_HCBUmBO1RxtSxw%26oe%3D694A7EE6%26_nc_sid%3Dd885a2&time=1766102400&key=f6c85fad725eba630b51839a0d4a2444');"></div>
+                    <div class="cat-overlay"></div>
+                    <div class="cat-content">
+                        <h3 class="cat-title heading-font text-5xl italic">DOMINATE THE FIELD</h3>
+                        <span class="cat-btn">L'ART DE RUE →</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LISTE PRODUITS (Cachée par défaut) -->
+            <div id="products-container" class="hidden">
+                <button onclick="resetCategories()" class="mb-8 bg-black text-white px-6 py-3 font-bold border-2 border-black hover:bg-white hover:text-black transition-colors">← RETOUR AUX CATÉGORIES</button>
+                <div id="product-list" class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8"></div>
+            </div>
+
         </section>
 
         <section class="py-24 bg-white px-4 border-t-8 border-black">
             <div class="max-w-4xl mx-auto">
-                <div class="bg-black text-[#E2A900] p-1 border-4 border-black inline-block mb-8 neo-brutal-shadow-sm font-bold">
-                    <h3 class="heading-font text-3xl px-4 py-2" data-i18n="find_us">NOUS_TROUVER</h3>
-                </div>
+                <div class="bg-black text-[#E2A900] p-1 border-4 border-black inline-block mb-8 neo-brutal-shadow-sm font-bold"><h3 class="heading-font text-3xl px-4 py-2" data-i18n="find_us">NOUS_TROUVER</h3></div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
                     <div onclick="showView('map')" class="bg-[#E2A900] text-black border-8 border-black p-8 neo-brutal-shadow-hover transition-all cursor-pointer">
                         <h4 class="heading-font text-4xl mb-4" data-i18n="address_title">L'ADRESSE 📍</h4>
@@ -196,7 +276,7 @@
                     <div><label class="font-bold uppercase" data-i18n="form_phone">Téléphone</label><input type="tel" id="c-phone" class="input-neo" placeholder="05XX XX XX XX"></div>
                     <div><label class="font-bold uppercase">Wilaya</label><select id="c-wilaya" class="input-neo"></select></div>
                     <div><label class="font-bold uppercase" data-i18n="form_address">Adresse</label><textarea id="c-adresse" class="input-neo" rows="3"></textarea></div>
-                    <button type="button" onclick="finaliserLaCaisse()" class="w-full bg-black text-[#E2A900] p-6 heading-font text-2xl neo-brutal-shadow-hover transition-all" data-i18n="confirm_btn">CONFIRMER LA COMMANDE</button>
+                    <button onclick="finaliserLaCaisse()" class="w-full bg-black text-[#E2A900] p-6 heading-font text-2xl neo-brutal-shadow-hover transition-all" data-i18n="confirm_btn">CONFIRMER LA COMMANDE</button>
                 </div>
             </div>
             <div id="checkout-success" class="hidden text-center py-10">
@@ -233,28 +313,8 @@
         const googleProvider = new firebase.auth.GoogleAuthProvider();
 
         const translations = {
-            fr: {
-                cart_title: "TON_PANIER", total: "TOTAL", checkout_btn: "FINALISER LA COMMANDE", nav_cart: "PANIER",
-                hero_1: "RONALDINHO", hero_2: "STORE", quote: '"L\'art du dribble commence par le bon appui."',
-                shop_btn: "SHOP KICKS ↓", catalog_title: "Nos Produits", find_us: "NOUS_TROUVER",
-                address_title: "L'ADRESSE 📍", see_hours: "VOIR LES HORAIRES →", contact_title: "CONTACT 📞",
-                contact_sub: "DISPONIBLE POUR LA MAGIE", map_header: "LOCALISATION", hours_title: "HORAIRES",
-                back_btn: "← RETOUR", checkout_header: "INFOS_LIVRAISON", form_name: "Nom", form_fname: "Prénom",
-                form_phone: "Téléphone", form_address: "Adresse", confirm_btn: "CONFIRMER LA COMMANDE",
-                success_msg: "COMMANDE PASSÉE !", callback_msg: "On vous rappelle sur :", back_stadium: "RETOUR AU STADE",
-                days: ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"], add_to_cart: "AJOUTER AU PANIER"
-            },
-            en: {
-                cart_title: "YOUR_CART", total: "TOTAL", checkout_btn: "CHECKOUT NOW", nav_cart: "CART",
-                hero_1: "RONALDINHO", hero_2: "STORE", quote: '"Dribbling art starts with the right grip."',
-                shop_btn: "SHOP KICKS ↓", catalog_title: "Our Products", find_us: "FIND_US",
-                address_title: "ADDRESS 📍", see_hours: "SEE OPENING HOURS →", contact_title: "CONTACT 📞",
-                contact_sub: "AVAILABLE FOR MAGIC", map_header: "LOCATION", hours_title: "OPENING HOURS",
-                back_btn: "← BACK", checkout_header: "DELIVERY_INFO", form_name: "Last Name", form_fname: "First Name",
-                form_phone: "Phone Number", form_address: "Full Address", confirm_btn: "CONFIRM ORDER",
-                success_msg: "ORDER PLACED !", callback_msg: "We will call you back at:", back_stadium: "BACK TO STADIUM",
-                days: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], add_to_cart: "ADD TO CART"
-            }
+            fr: { cart_title: "TON_PANIER", total: "TOTAL", checkout_btn: "FINALISER LA COMMANDE", nav_cart: "PANIER", hero_1: "RONALDINHO", hero_2: "STORE", quote: '"L\'art du dribble commence par le bon appui."', shop_btn: "SHOP KICKS ↓", catalog_title: "COLLECTION", find_us: "NOUS_TROUVER", address_title: "L'ADRESSE 📍", see_hours: "VOIR LES HORAIRES →", contact_title: "CONTACT 📞", contact_sub: "DISPONIBLE POUR LA MAGIE", map_header: "LOCALISATION", hours_title: "HORAIRES", back_btn: "← RETOUR", checkout_header: "INFOS_LIVRAISON", form_name: "Nom", form_fname: "Prénom", form_phone: "Téléphone", form_address: "Adresse", confirm_btn: "CONFIRMER LA COMMANDE", success_msg: "COMMANDE PASSÉE !", callback_msg: "On vous rappelle sur :", back_stadium: "RETOUR AU STADE", days: ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"], add_to_cart: "AJOUTER AU PANIER" },
+            en: { cart_title: "YOUR_CART", total: "TOTAL", checkout_btn: "CHECKOUT NOW", nav_cart: "CART", hero_1: "RONALDINHO", hero_2: "STORE", quote: '"Dribbling art starts with the right grip."', shop_btn: "SHOP KICKS ↓", catalog_title: "COLLECTION", find_us: "FIND_US", address_title: "ADDRESS 📍", see_hours: "SEE OPENING HOURS →", contact_title: "CONTACT 📞", contact_sub: "AVAILABLE FOR MAGIC", map_header: "LOCATION", hours_title: "OPENING HOURS", back_btn: "← BACK", checkout_header: "DELIVERY_INFO", form_name: "Last Name", form_fname: "First Name", form_phone: "Phone Number", form_address: "Full Address", confirm_btn: "CONFIRM ORDER", success_msg: "ORDER PLACED !", callback_msg: "We will call you back at:", back_stadium: "BACK TO STADIUM", days: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], add_to_cart: "ADD TO CART" }
         };
 
         let currentLang = 'fr';
@@ -264,13 +324,8 @@
         let currentUser = null;
         const wilayas = ["01 Adrar", "02 Chlef", "03 Laghouat", "04 Oum El Bouaghi", "05 Batna", "06 Béjaïa", "07 Biskra", "08 Béchar", "09 Blida", "10 Bouira", "11 Tamanrasset", "12 Tébessa", "13 Tlemcen", "14 Tiaret", "15 Tizi Ouzou", "16 Alger", "17 Djelfa", "18 Jijel", "19 Sétif", "20 Saïda", "21 Skikda", "22 Sidi Bel Abbès", "23 Annaba", "24 Guelma", "25 Constantine", "26 Médéa", "27 Mostaganem", "28 M'Sila", "29 Mascara", "30 Ouargla", "31 Oran", "32 El Bayadh", "33 Illizi", "34 Bordj Bou Arreridj", "35 Boumerdès", "36 El Tarf", "37 Tindouf", "38 Tissemsilt", "39 El Oued", "40 Khenchela", "41 Souk Ahras", "42 Tipaza", "43 Mila", "44 Aïn Defla", "45 Naâma", "46 Aïn Témouchent", "47 Ghardaïa", "48 Relizane", "49 El M'Ghair", "50 El Meniaa", "51 Ouled Djellal", "52 Bordj Baji Mokhtar", "53 Béni Abbès", "54 Timimoun", "55 Touggourt", "56 Djanet", "57 In Salah", "58 In Guezzam"];
 
-        // VIDER HISTORIQUE (Pour repartir à zéro comme sur la photo)
-        if (!localStorage.getItem('r10_reset_v5')) {
-            localStorage.removeItem('r10_orders');
-            localStorage.setItem('r10_reset_v5', 'true');
-        }
+        if (!localStorage.getItem('r10_reset_v7')) { localStorage.removeItem('r10_orders'); localStorage.setItem('r10_reset_v7', 'true'); }
 
-        // AUTH
         auth.onAuthStateChanged(user => {
             currentUser = user;
             if (user) {
@@ -283,11 +338,7 @@
                 document.getElementById('sidebar-auth-logged-out').classList.remove('hidden');
                 document.getElementById('sidebar-auth-logged-in').classList.add('hidden');
                 document.getElementById('not-connected-msg').classList.remove('hidden');
-                // AFFICHE LE MESSAGE VIDE PAR DEFAUT
-                document.getElementById('orders-list').innerHTML = `
-                    <div class="p-12 border-4 border-dashed border-black text-center font-bold text-2xl uppercase opacity-50">
-                        AUCUNE COMMANDE POUR LE MOMENT
-                    </div>`;
+                document.getElementById('orders-list').innerHTML = `<div class="p-12 border-4 border-dashed border-black text-center font-bold text-2xl uppercase opacity-50">AUCUNE COMMANDE POUR LE MOMENT</div>`;
             }
         });
 
@@ -330,71 +381,45 @@
             } catch (e) { alert("Erreur: " + e.message); }
         }
 
-        async function loginGoogle() {
-            try {
-                await auth.signInWithPopup(googleProvider);
-                showView('home');
-            } catch (e) { alert("Erreur Google: " + e.message); }
-        }
-
+        async function loginGoogle() { try { await auth.signInWithPopup(googleProvider); showView('home'); } catch (e) { alert("Erreur Google: " + e.message); } }
         function logout() { auth.signOut(); showView('home'); }
 
-        // CATALOGUE
-        db.collection("products").onSnapshot((snapshot) => {
-            products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            renderCatalog();
-        });
+        db.collection("products").onSnapshot((snapshot) => { products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); /* Le rendu se fait via les catégories maintenant */ });
 
-        function toggleLang() {
-            currentLang = currentLang === 'fr' ? 'en' : 'fr';
-            document.getElementById('langBtn').innerText = currentLang === 'fr' ? 'EN' : 'FR';
-            applyTranslations();
-            renderCatalog(); 
+        // CATEGORIES
+        function openCategory(catName) {
+            document.getElementById('category-container').classList.add('hidden');
+            document.getElementById('products-container').classList.remove('hidden');
+            // FILTRE SUR LA CATEGORIE (SI AUCUNE CAT DANS DB, AFFICHE TOUT POUR EVITER LE VIDE)
+            const filtered = products.filter(p => p.category === catName || !p.category);
+            renderCatalog(filtered); 
         }
 
-        function applyTranslations() {
-            document.querySelectorAll('[data-i18n]').forEach(el => {
-                const key = el.getAttribute('data-i18n');
-                el.innerText = translations[currentLang][key];
-            });
-            renderHours();
+        function resetCategories() {
+            document.getElementById('products-container').classList.add('hidden');
+            document.getElementById('category-container').classList.remove('hidden');
         }
 
-        function renderHours() {
-            const times = ["12:30–22:00", "12:30–22:00", "12:30–22:00", "12:30–22:00", "16:30–23:00", "12:30–22:00", "12:30–22:00"];
-            const list = document.getElementById('hours-list');
-            if (list) {
-                list.innerHTML = translations[currentLang].days.map((day, i) => `
-                    <li class="flex justify-between border-b-2 border-black/20 pb-1 ${i===4?'text-white bg-black px-1':''}">
-                        <span>${day}</span> <span>${times[i]}</span>
-                    </li>`).join('');
-            }
-        }
+        function toggleLang() { currentLang = currentLang === 'fr' ? 'en' : 'fr'; document.getElementById('langBtn').innerText = currentLang === 'fr' ? 'EN' : 'FR'; applyTranslations(); renderCatalog(products); }
+        function applyTranslations() { document.querySelectorAll('[data-i18n]').forEach(el => { const key = el.getAttribute('data-i18n'); el.innerText = translations[currentLang][key]; }); renderHours(); }
+        function renderHours() { const times = ["12:30–22:00", "12:30–22:00", "12:30–22:00", "12:30–22:00", "16:30–23:00", "12:30–22:00", "12:30–22:00"]; const list = document.getElementById('hours-list'); if (list) { list.innerHTML = translations[currentLang].days.map((day, i) => `<li class="flex justify-between border-b-2 border-black/20 pb-1 ${i===4?'text-white bg-black px-1':''}"><span>${day}</span> <span>${times[i]}</span></li>`).join(''); } }
+        function showView(viewId) { document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active')); document.getElementById(`${viewId}-view`).classList.add('active'); window.scrollTo(0,0); if(viewId === 'orders') renderOrders(); }
+        function toggleCart(isOpen) { document.getElementById('cart-sidebar').classList.toggle('open', isOpen); document.getElementById('cart-overlay').classList.toggle('open', isOpen); if(isOpen) renderSidebarCart(); }
 
-        function showView(viewId) {
-            document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
-            document.getElementById(`${viewId}-view`).classList.add('active');
-            window.scrollTo(0,0);
-            if(viewId === 'orders') renderOrders();
-        }
-
-        function toggleCart(isOpen) {
-            document.getElementById('cart-sidebar').classList.toggle('open', isOpen);
-            document.getElementById('cart-overlay').classList.toggle('open', isOpen);
-            if(isOpen) renderSidebarCart();
-        }
-
-        function renderCatalog() {
+        function renderCatalog(items) {
             const list = document.getElementById('product-list');
             if (list) {
-                list.innerHTML = products.map(p => {
+                // MESSAGE SI CATEGORIE VIDE
+                if (!items || items.length === 0) {
+                    list.innerHTML = `<div class="col-span-3 text-center py-10 font-bold opacity-50 border-4 border-dashed border-black">AUCUN PRODUIT DANS CETTE CATÉGORIE</div>`;
+                    return;
+                }
+                list.innerHTML = items.map(p => {
                     const isOutOfStock = p.stock <= 0;
-                    return `
-                    <div class="bg-white border-4 border-black p-6 neo-brutal-shadow-hover flex flex-col cursor-pointer relative" onclick="${isOutOfStock ? '' : `renderProductDetail('${p.id}')`}">
+                    return `<div class="bg-white border-4 border-black p-6 neo-brutal-shadow-hover flex flex-col cursor-pointer relative" onclick="${isOutOfStock ? '' : `renderProductDetail('${p.id}')`}">
                         ${isOutOfStock ? '<div class="sold-out-badge">STOCK ÉPUISÉ</div>' : ''}
                         <img src="${p.img}" class="w-full h-64 object-cover mb-4 border-4 border-black ${isOutOfStock ? 'grayscale-img' : ''}" onerror="this.src='https://via.placeholder.com/400x400?text=Sneakers'">
-                        <h4 class="heading-font text-2xl">${p.name}</h4>
-                        <p class="font-black text-xl">${p.price} DA</p>
+                        <h4 class="heading-font text-2xl">${p.name}</h4><p class="font-black text-xl">${p.price} DA</p>
                     </div>`;
                 }).join('');
             }
@@ -412,7 +437,10 @@
                         <h2 class="heading-font text-5xl mb-4">${p.name}</h2>
                         <p class="mb-6 font-bold text-lg">${isOutOfStock ? (currentLang === 'fr' ? 'Stock épuisé' : 'Out of Stock') : p.longDesc}</p>
                         <div class="flex flex-wrap gap-2 mb-8">
-                            ${(p.sizes || []).map(s => `<button onclick="${isOutOfStock ? '' : `selectSize('${s}')`}" data-size="${s}" class="size-btn border-2 border-white px-4 py-2 text-white font-bold ${isOutOfStock ? 'opacity-30 cursor-not-allowed' : 'hover:bg-white hover:text-black transition-colors'}">${s}</button>`).join('')}
+                            ${(p.sizes || []).map(s => {
+                                const isUnavailable = (p.unavailableSizes || []).includes(s);
+                                return `<button onclick="${isOutOfStock || isUnavailable ? '' : `selectSize('${s}')`}" data-size="${s}" class="size-btn border-2 border-white px-4 py-2 text-white font-bold ${isOutOfStock ? 'opacity-30 cursor-not-allowed' : (isUnavailable ? 'size-unavailable' : 'hover:bg-white hover:text-black transition-colors')}">${s}</button>`;
+                            }).join('')}
                         </div>
                         <button onclick="${isOutOfStock ? '' : `addToCart('${p.id}')`}" class="w-full ${isOutOfStock ? 'bg-gray-600 cursor-not-allowed' : 'bg-[#E2A900] text-black neo-brutal-shadow-hover'} p-6 heading-font text-2xl">
                             ${isOutOfStock ? (currentLang === 'fr' ? 'STOCK ÉPUISÉ' : 'OUT OF STOCK') : translations[currentLang].add_to_cart}
@@ -425,112 +453,36 @@
         function selectSize(s) { selectedSize = s; document.querySelectorAll('.size-btn').forEach(b => b.classList.toggle('size-selected', b.dataset.size == s)); }
         function addToCart(id) { if(!selectedSize) { alert("Choisis une pointure !"); return; } const p = products.find(x => x.id === id); cart.push({...p, size: selectedSize}); updateCartCount(); toggleCart(true); }
         function updateCartCount() { document.getElementById('cart-count').innerText = cart.length; }
-        function renderSidebarCart() {
-            const cont = document.getElementById('sidebar-cart-items');
-            if(cart.length === 0) { cont.innerHTML= `<div class='text-center py-10 opacity-50'>${currentLang === 'fr' ? 'TON PANIER EST VIDE' : 'EMPTY CART'}</div>`; return; }
-            let total = 0;
-            cont.innerHTML = cart.map((i, index) => { total+=i.price; return `<div class="border-4 border-black p-4 mb-2 bg-gray-50 flex justify-between items-center"><div><b class="block">${i.name}</b><span class="text-sm">Taille: ${i.size}</span></div><div class="flex items-center gap-4"><span>${i.price} DA</span><button onclick="removeFromCart(${index})" class="text-red-600 border-2 border-black px-2 hover:bg-black hover:text-white">X</button></div></div>` }).join('');
-            document.getElementById('sidebar-total').innerText = total + " DA";
-        }
+        function renderSidebarCart() { const cont = document.getElementById('sidebar-cart-items'); if(cart.length === 0) { cont.innerHTML= `<div class='text-center py-10 opacity-50'>${currentLang === 'fr' ? 'TON PANIER EST VIDE' : 'EMPTY CART'}</div>`; return; } let total = 0; cont.innerHTML = cart.map((i, index) => { total+=i.price; return `<div class="border-4 border-black p-4 mb-2 bg-gray-50 flex justify-between items-center"><div><b class="block">${i.name}</b><span class="text-sm">Taille: ${i.size}</span></div><div class="flex items-center gap-4"><span>${i.price} DA</span><button onclick="removeFromCart(${index})" class="text-red-600 border-2 border-black px-2 hover:bg-black hover:text-white">X</button></div></div>` }).join(''); document.getElementById('sidebar-total').innerText = total + " DA"; }
         function removeFromCart(index) { cart.splice(index, 1); updateCartCount(); renderSidebarCart(); }
         function goToCheckout() { if(cart.length === 0) return; toggleCart(false); showView('checkout'); if(currentUser) loadUserData(currentUser.uid); }
-
-        function resetCheckoutForm() {
-            showView('home');
-            setTimeout(() => {
-                document.getElementById('checkout-form-container').classList.remove('hidden');
-                document.getElementById('checkout-success').classList.add('hidden');
-            }, 500);
-        }
+        function resetCheckoutForm() { showView('home'); setTimeout(() => { document.getElementById('checkout-form-container').classList.remove('hidden'); document.getElementById('checkout-success').classList.add('hidden'); }, 500); }
 
         async function finaliserLaCaisse() {
-            const nom = document.getElementById('c-nom').value;
-            const prenom = document.getElementById('c-prenom').value;
-            const num = document.getElementById('c-phone').value;
-            const wilaya = document.getElementById('c-wilaya').value;
-            const adresse = document.getElementById('c-adresse').value;
-
+            const nom = document.getElementById('c-nom').value; const prenom = document.getElementById('c-prenom').value; const num = document.getElementById('c-phone').value; const wilaya = document.getElementById('c-wilaya').value; const adresse = document.getElementById('c-adresse').value;
             if(!num || !nom) return alert("Veuillez remplir les informations !");
-
-            const orderData = {
-                userId: currentUser ? currentUser.uid : "guest",
-                client: nom + " " + prenom,
-                phone: num,
-                wilaya: wilaya,
-                adresse: adresse,
-                items: cart,
-                total: cart.reduce((acc, curr) => acc + curr.price, 0),
-                status: "En attente de rappel",
-                date: new Date().toLocaleString('fr-FR'),
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            };
-
+            const orderData = { userId: currentUser ? currentUser.uid : "guest", client: nom + " " + prenom, phone: num, wilaya: wilaya, adresse: adresse, items: cart, total: cart.reduce((acc, curr) => acc + curr.price, 0), status: "En attente de rappel", date: new Date().toLocaleString('fr-FR'), timestamp: firebase.firestore.FieldValue.serverTimestamp() };
             if(currentUser) await db.collection("users").doc(currentUser.uid).set({ nom, prenom, phone: num, wilaya, adresse }, { merge: true });
-
-            try {
-                await db.collection("orders").add(orderData);
-                document.getElementById('checkout-form-container').classList.add('hidden');
-                document.getElementById('res-num').innerText = num;
-                document.getElementById('checkout-success').classList.remove('hidden');
-                cart = []; updateCartCount();
-            } catch(e) {
-                alert("Erreur de commande : " + e.message);
-            }
+            try { await db.collection("orders").add(orderData); document.getElementById('checkout-form-container').classList.add('hidden'); document.getElementById('res-num').innerText = num; document.getElementById('checkout-success').classList.remove('hidden'); cart = []; updateCartCount(); } catch(e) { alert("Erreur de commande : " + e.message); }
         }
 
-        // --- AFFICHAGE AVEC TRI CÔTÉ CLIENT (POUR EVITER L'ERREUR D'INDEX) ---
         function renderOrders() {
             if (!currentUser) return;
-            
-            // On enlève le orderBy("timestamp") qui faisait planter l'affichage vide
-            db.collection("orders")
-              .where("userId", "==", currentUser.uid)
-              .onSnapshot(snapshot => {
+            // TRI COTE CLIENT
+            db.collection("orders").where("userId", "==", currentUser.uid).onSnapshot(snapshot => {
                 const list = document.getElementById('orders-list');
-                
-                if(snapshot.empty) {
-                    list.innerHTML = `<div class="p-12 border-4 border-dashed border-black text-center font-bold text-2xl uppercase opacity-50">AUCUNE COMMANDE POUR LE MOMENT</div>`;
-                    return;
-                }
-
-                // On trie manuellement ici
-                let docs = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
-                docs.sort((a, b) => (b.timestamp ? b.timestamp.seconds : 0) - (a.timestamp ? a.timestamp.seconds : 0));
-
+                if(snapshot.empty) { list.innerHTML = `<div class="p-12 border-4 border-dashed border-black text-center font-bold text-2xl uppercase opacity-50">AUCUNE COMMANDE POUR LE MOMENT</div>`; return; }
+                let docs = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()})); docs.sort((a, b) => (b.timestamp ? b.timestamp.seconds : 0) - (a.timestamp ? a.timestamp.seconds : 0));
                 list.innerHTML = docs.map(order => {
-                    let statusClass = "bg-black text-[#E2A900]";
-                    let statusText = order.status;
-
-                    if(order.status === "Confirmé") {
-                        statusText = "✅ COMMANDE ACCEPTÉE";
-                        statusClass = "bg-green-600 text-white border-2 border-black";
-                    } else if (order.status === "Rejeté") {
-                        statusText = "❌ COMMANDE REFUSÉE";
-                        statusClass = "bg-red-600 text-white border-2 border-black";
-                    }
-
-                    return `
-                    <div class="border-8 border-black p-6 neo-brutal-shadow bg-white">
-                        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 border-b-4 border-black pb-4">
-                            <div><p class="text-sm font-bold opacity-50">COMMANDE #${order.id.substring(0,6)}</p><p class="heading-font text-xl">${order.date}</p></div>
-                            <div class="${statusClass} px-4 py-2 font-black uppercase text-sm italic">${statusText}</div>
-                        </div>
-                        <div class="space-y-4 mb-6">${order.items.map(item => `<div class="flex justify-between items-center font-bold"><span>${item.name} (T: ${item.size})</span><span>${item.price} DA</span></div>`).join('')}</div>
-                        <div class="flex justify-between items-center pt-4 border-t-4 border-black font-black text-2xl heading-font"><span>TOTAL</span><span>${order.total} DA</span></div>
-                    </div>`;
+                    let statusClass = "bg-black text-[#E2A900]"; let statusText = order.status;
+                    if(order.status === "Confirmé") { statusText = "✅ COMMANDE ACCEPTÉE"; statusClass = "bg-green-600 text-white border-2 border-black"; } 
+                    else if (order.status === "Rejeté") { statusText = "❌ COMMANDE REFUSÉE"; statusClass = "bg-red-600 text-white border-2 border-black"; }
+                    return `<div class="border-8 border-black p-6 neo-brutal-shadow bg-white"><div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 border-b-4 border-black pb-4"><div><p class="text-sm font-bold opacity-50">COMMANDE #${order.id.substring(0,6)}</p><p class="heading-font text-xl">${order.date}</p></div><div class="${statusClass} px-4 py-2 font-black uppercase text-sm italic">${statusText}</div></div><div class="space-y-4 mb-6">${order.items.map(item => `<div class="flex justify-between items-center font-bold"><span>${item.name} (T: ${item.size})</span><span>${item.price} DA</span></div>`).join('')}</div><div class="flex justify-between items-center pt-4 border-t-4 border-black font-black text-2xl heading-font"><span>TOTAL</span><span>${order.total} DA</span></div></div>`;
                 }).join('');
             });
         }
 
-        window.onload = () => {
-            const selectW = document.getElementById('c-wilaya');
-            if(selectW) wilayas.forEach(w => { let opt = document.createElement('option'); opt.value = w; opt.innerHTML = w; selectW.appendChild(opt); });
-            document.addEventListener('mousemove', (e) => { const c = document.getElementById('cursor'); if(c) { c.style.left = e.clientX + 'px'; c.style.top = e.clientY + 'px'; } });
-            
-            renderHours(); 
-            applyTranslations(); 
-            updateCartCount();
-        };
+        window.onload = () => { const selectW = document.getElementById('c-wilaya'); if(selectW) wilayas.forEach(w => { let opt = document.createElement('option'); opt.value = w; opt.innerHTML = w; selectW.appendChild(opt); }); document.addEventListener('mousemove', (e) => { const c = document.getElementById('cursor'); if(c) { c.style.left = e.clientX + 'px'; c.style.top = e.clientY + 'px'; } }); renderHours(); applyTranslations(); updateCartCount(); };
     </script>
 </body>
 </html>
