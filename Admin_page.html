@@ -7,8 +7,13 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Grotesk:wght@300;400;700&display=swap" rel="stylesheet">
     
+    <!-- FIREBASE -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+    <!-- BIBLIOTHÈQUES POUR CRÉER LES PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
 
     <style>
         :root { --primary: #E2A900; --dark: #000100; }
@@ -56,10 +61,9 @@
                     <label class="block font-bold">Prix (DA)</label>
                     <input type="number" id="p-price" class="input-neo" placeholder="18000">
                     
-                    <!-- STOCK DETAILLÉ -->
-                    <label class="block font-bold">Stock par Taille (Format: Taille:Qté)</label>
-                    <input type="text" id="p-stock-data" class="input-neo" placeholder="Ex: 40:5, 41:3, 42:10">
-                    <p class="text-xs mb-4 font-bold opacity-70">Séparez par des virgules. Ex: 5 paires en 40, 3 en 41...</p>
+                    <label class="block font-bold">Stock par Taille (Format: 40:5, 41:2)</label>
+                    <input type="text" id="p-stock-data" class="input-neo" placeholder="Ex: 40:5, 41:3, 42:1">
+                    <p class="text-xs mb-4 font-bold opacity-70">Syntaxe : Taille:Quantité, Taille:Quantité...</p>
                     
                     <label class="block font-bold">URL Image</label>
                     <input type="text" id="p-img" class="input-neo" placeholder="Lien de la photo">
@@ -113,17 +117,97 @@
             document.getElementById(tabId).classList.add('active');
         }
 
+        // --- GENERATEUR DE FACTURE PDF ---
+        window.generateInvoice = async function(orderId) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            // Récupérer les infos de la commande
+            const orderDoc = await db.collection("orders").doc(orderId).get();
+            if (!orderDoc.exists) return alert("Commande introuvable");
+            const o = orderDoc.data();
+
+            // EN-TÊTE
+            doc.setFontSize(22);
+            doc.setFont("helvetica", "bold");
+            doc.text("RONALDINHO STORE10", 105, 20, null, null, "center");
+            
+            doc.setFontSize(10);
+            doc.setFont("helvetica", "normal");
+            doc.text("Sidi M'Hamed, Alger", 105, 26, null, null, "center");
+            doc.text("Tel: 0557 30 03 96", 105, 31, null, null, "center");
+
+            doc.setLineWidth(0.5);
+            doc.line(20, 35, 190, 35);
+
+            // INFOS CLIENT
+            doc.setFontSize(12);
+            doc.setFont("helvetica", "bold");
+            doc.text("FACTURE", 20, 50);
+            
+            doc.setFontSize(10);
+            doc.setFont("helvetica", "normal");
+            doc.text(`Date : ${o.date}`, 20, 56);
+            doc.text(`ID Commande : #${orderId.substring(0, 8).toUpperCase()}`, 20, 61);
+
+            doc.setFont("helvetica", "bold");
+            doc.text("CLIENT :", 120, 50);
+            doc.setFont("helvetica", "normal");
+            doc.text(`${o.client}`, 120, 56);
+            doc.text(`${o.phone}`, 120, 61);
+            doc.text(`${o.wilaya}`, 120, 66);
+            // Découper l'adresse si trop longue
+            const splitAddress = doc.splitTextToSize(o.adresse, 70);
+            doc.text(splitAddress, 120, 71);
+
+            // TABLEAU DES ARTICLES
+            const tableColumn = ["Article", "Taille", "Prix"];
+            const tableRows = [];
+
+            (o.items || []).forEach(item => {
+                const itemData = [
+                    item.name,
+                    item.size,
+                    `${item.price} DA`
+                ];
+                tableRows.push(itemData);
+            });
+
+            doc.autoTable({
+                head: [tableColumn],
+                body: tableRows,
+                startY: 90,
+                theme: 'grid',
+                headStyles: { fillColor: [0, 0, 0], textColor: [255, 204, 0], fontStyle: 'bold' }, // Noir et Or
+                styles: { fontSize: 10, cellPadding: 3 },
+            });
+
+            // TOTAL
+            const finalY = doc.lastAutoTable.finalY + 10;
+            doc.setFontSize(14);
+            doc.setFont("helvetica", "bold");
+            doc.text(`TOTAL À PAYER : ${o.total} DA`, 190, finalY, null, null, "right");
+
+            // PIED DE PAGE
+            doc.setFontSize(10);
+            doc.setFont("helvetica", "italic");
+            doc.text("Merci pour votre confiance. La magie continue !", 105, finalY + 20, null, null, "center");
+
+            // Sauvegarder le PDF
+            doc.save(`Facture_R10_${o.client.replace(/\s+/g, '_')}.pdf`);
+        };
+
+        // --- FONCTIONS PRODUITS & STOCK ---
         async function addProduct() {
             const name = document.getElementById('p-name').value;
             const category = document.getElementById('p-category').value;
             const price = parseInt(document.getElementById('p-price').value);
-            const stockStr = document.getElementById('p-stock-data').value; // Ex: "40:5, 41:2"
+            const stockStr = document.getElementById('p-stock-data').value;
             const img = document.getElementById('p-img').value;
             const desc = document.getElementById('p-desc').value;
 
             if(!name || !price || !stockStr) return alert("Champs requis !");
 
-            // Parsing du stock
             const stockMap = {};
             const sizesArr = [];
             let totalStock = 0;
@@ -143,23 +227,20 @@
                     }
                 });
             } catch(e) {
-                return alert("Erreur format stock ! Utilisez: 40:5, 41:2");
+                return alert("Format incorrect. Utilisez: 40:5, 41:2");
             }
+
+            if(sizesArr.length === 0) return alert("Aucune taille valide trouvée.");
 
             try {
                 await db.collection("products").add({
-                    name, category, price, 
-                    sizes: sizesArr, 
-                    stock: stockMap, 
-                    totalStock: totalStock,
-                    img: img || "https://via.placeholder.com/400", 
-                    longDesc: desc, 
-                    createdAt: new Date()
+                    name, category, price, sizes: sizesArr, stock: stockMap, totalStock: totalStock,
+                    img: img || "https://via.placeholder.com/400", longDesc: desc, createdAt: new Date()
                 });
                 alert("Produit ajouté !");
                 document.querySelectorAll('.input-neo').forEach(i => { if(i.tagName !== 'SELECT') i.value = ""; });
             } catch(e) {
-                alert("Erreur lors de l'ajout : " + e.message);
+                alert("Erreur ajout : " + e.message);
             }
         }
 
@@ -168,7 +249,6 @@
             list.innerHTML = snap.docs.map(doc => {
                 const p = doc.data();
                 const catName = p.category === 'street' ? 'DOMINATE THE FIELD' : 'OWN THE STREETS';
-                
                 let stockDisplay = "";
                 if (p.stock && typeof p.stock === 'object') {
                     stockDisplay = Object.entries(p.stock).map(([size, qty]) => {
@@ -189,75 +269,47 @@
                             <p class="font-bold mt-1">${p.price} DA</p>
                         </div>
                     </div>
-                    
                     <div class="bg-gray-100 p-2 border-2 border-black mb-4">
-                        <p class="text-xs font-bold uppercase mb-1">État du Stock :</p>
-                        <div class="flex flex-wrap gap-y-1">
-                            ${stockDisplay}
-                        </div>
+                        <p class="text-xs font-bold uppercase mb-1">Stocks :</p>
+                        <div class="flex flex-wrap gap-y-1">${stockDisplay}</div>
                     </div>
-
                     <button onclick="deleteProduct('${doc.id}')" class="text-red-500 underline text-xs mt-auto text-left">Supprimer l'article</button>
                 </div>`;
             }).join('');
         });
 
-        // CONFIRMER COMMANDE AVEC GESTION STOCK PAR TAILLE
+        // --- GESTION COMMANDES ---
         window.confirmOrder = async function(orderId) {
             if(!confirm("Confirmer la commande et déduire du stock ?")) return;
-            
             try {
-                // 1. Récupérer la commande
                 const orderDoc = await db.collection("orders").doc(orderId).get();
                 if (!orderDoc.exists) return alert("Commande introuvable");
-                
                 const items = orderDoc.data().items || [];
 
-                // 2. Mettre à jour le stock
                 for (const item of items) {
                     const productQuery = await db.collection("products").where("name", "==", item.name).get();
-                    
                     if (!productQuery.empty) {
                         const productDoc = productQuery.docs[0];
                         const productData = productDoc.data();
                         const sizeOrdered = item.size.toString();
-
                         if (productData.stock && typeof productData.stock === 'object') {
                             const currentQty = productData.stock[sizeOrdered];
-                            
                             if (currentQty > 0) {
                                 const updateField = {};
                                 updateField[`stock.${sizeOrdered}`] = currentQty - 1;
-                                
                                 await db.collection("products").doc(productDoc.id).update(updateField);
-                            }
-                        } else {
-                            if (productData.stock > 0) {
-                                await db.collection("products").doc(productDoc.id).update({
-                                    stock: productData.stock - 1
-                                });
                             }
                         }
                     }
                 }
-
-                // 3. Valider
                 await db.collection("orders").doc(orderId).update({ status: "Confirmé" });
                 alert("Commande validée et stock décrémenté !");
-
-            } catch (e) {
-                console.error(e);
-                alert("Erreur: " + e.message);
-            }
+            } catch (e) { alert("Erreur: " + e.message); }
         };
 
         window.rejectOrder = async function(orderId) {
             if(!confirm("Rejeter cette commande ?")) return;
-            try {
-                await db.collection("orders").doc(orderId).update({ status: "Rejeté" });
-            } catch (e) {
-                alert("Erreur : " + e.message);
-            }
+            try { await db.collection("orders").doc(orderId).update({ status: "Rejeté" }); } catch (e) { alert("Erreur : " + e.message); }
         };
 
         window.deleteOrder = async function(id) { 
@@ -284,7 +336,11 @@
 
                 if(isConfirmed) {
                     statusBadge = `<div class="bg-green-100 text-green-700 px-4 py-2 font-bold border-2 border-green-700">✅ VALIDÉE</div>`;
-                    actions = `<button onclick="deleteOrder('${doc.id}')" class="text-xs underline text-gray-500">Archiver</button>`;
+                    // BOUTON FACTURE AJOUTÉ ICI
+                    actions = `
+                        <button onclick="generateInvoice('${doc.id}')" class="bg-blue-600 text-white px-3 py-1 font-bold border-2 border-black hover:bg-blue-800 mr-2">📄 FACTURE</button>
+                        <button onclick="deleteOrder('${doc.id}')" class="text-xs underline text-gray-500">Archiver</button>
+                    `;
                 } else if(isRejected) {
                     statusBadge = `<div class="bg-red-100 text-red-700 px-4 py-2 font-bold border-2 border-red-700">❌ REJETÉE</div>`;
                     actions = `<button onclick="deleteOrder('${doc.id}')" class="text-xs underline text-gray-500">Archiver</button>`;
@@ -311,14 +367,13 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <p class="font-bold">📞 ${o.phone}</p>
-                            <p class="text-sm italic mb-1">📍 ${o.wilaya}</p>
-                            <p class="text-sm font-bold mb-2">🏠 ${o.adresse || 'Adresse non renseignée'}</p>
+                            <p class="text-sm italic mb-2">📍 ${o.wilaya}</p>
                             <p class="text-xs opacity-50">Date: ${o.date}</p>
                         </div>
                         <div class="bg-gray-50 p-2 border-2 border-black/5">${itemsHtml || 'Détails manquants'}</div>
                     </div>
                     <div class="flex justify-between items-center mt-6">
-                        <div class="flex gap-2">${actions}</div>
+                        <div class="flex gap-2 items-center">${actions}</div>
                         ${statusBadge}
                     </div>
                 </div>`;
