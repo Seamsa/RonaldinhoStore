@@ -20,7 +20,6 @@
         .sidebar { background: var(--dark); color: var(--primary); }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
-        /* Style pour les petits badges de stock */
         .size-badge { background: black; color: #E2A900; padding: 2px 6px; font-size: 0.8rem; margin-right: 4px; font-weight: bold; border: 1px solid black; }
         .size-badge.low-stock { background: red; color: white; border-color: red; }
     </style>
@@ -57,10 +56,10 @@
                     <label class="block font-bold">Prix (DA)</label>
                     <input type="number" id="p-price" class="input-neo" placeholder="18000">
                     
-                    <!-- MODIFICATION ICI : STOCK PAR TAILLE -->
-                    <label class="block font-bold">Stock par Taille (Format: 40:5, 41:2)</label>
-                    <input type="text" id="p-stock-data" class="input-neo" placeholder="Ex: 40:5, 41:3, 42:1">
-                    <p class="text-xs mb-4 font-bold opacity-70">Syntaxe : Taille:Quantité, Taille:Quantité...</p>
+                    <!-- STOCK DETAILLÉ -->
+                    <label class="block font-bold">Stock par Taille (Format: Taille:Qté)</label>
+                    <input type="text" id="p-stock-data" class="input-neo" placeholder="Ex: 40:5, 41:3, 42:10">
+                    <p class="text-xs mb-4 font-bold opacity-70">Séparez par des virgules. Ex: 5 paires en 40, 3 en 41...</p>
                     
                     <label class="block font-bold">URL Image</label>
                     <input type="text" id="p-img" class="input-neo" placeholder="Lien de la photo">
@@ -118,17 +117,17 @@
             const name = document.getElementById('p-name').value;
             const category = document.getElementById('p-category').value;
             const price = parseInt(document.getElementById('p-price').value);
-            // On récupère la chaine "40:5, 41:2"
-            const stockStr = document.getElementById('p-stock-data').value;
+            const stockStr = document.getElementById('p-stock-data').value; // Ex: "40:5, 41:2"
             const img = document.getElementById('p-img').value;
             const desc = document.getElementById('p-desc').value;
 
             if(!name || !price || !stockStr) return alert("Champs requis !");
 
-            // Conversion du texte en objet stock { "40": 5, "41": 2 }
+            // Parsing du stock
             const stockMap = {};
             const sizesArr = [];
-            
+            let totalStock = 0;
+
             try {
                 const pairs = stockStr.split(',');
                 pairs.forEach(p => {
@@ -139,20 +138,20 @@
                         if(!isNaN(q)) {
                             stockMap[s] = q;
                             sizesArr.push(s);
+                            totalStock += q;
                         }
                     }
                 });
             } catch(e) {
-                return alert("Format incorrect. Utilisez: 40:5, 41:2");
+                return alert("Erreur format stock ! Utilisez: 40:5, 41:2");
             }
-
-            if(sizesArr.length === 0) return alert("Aucune taille valide trouvée.");
 
             try {
                 await db.collection("products").add({
                     name, category, price, 
                     sizes: sizesArr, 
-                    stock: stockMap, // On enregistre l'objet de stock détaillé
+                    stock: stockMap, 
+                    totalStock: totalStock,
                     img: img || "https://via.placeholder.com/400", 
                     longDesc: desc, 
                     createdAt: new Date()
@@ -170,7 +169,6 @@
                 const p = doc.data();
                 const catName = p.category === 'street' ? 'DOMINATE THE FIELD' : 'OWN THE STREETS';
                 
-                // Affichage des stocks sous forme de badges
                 let stockDisplay = "";
                 if (p.stock && typeof p.stock === 'object') {
                     stockDisplay = Object.entries(p.stock).map(([size, qty]) => {
@@ -178,7 +176,6 @@
                         return `<span class="size-badge ${badgeClass}">${size}: ${qty}</span>`;
                     }).join('');
                 } else {
-                    // Fallback ancien format
                     stockDisplay = `<span class="font-bold">Stock Global: ${p.stock || 0}</span>`;
                 }
 
@@ -194,7 +191,7 @@
                     </div>
                     
                     <div class="bg-gray-100 p-2 border-2 border-black mb-4">
-                        <p class="text-xs font-bold uppercase mb-1">Stocks :</p>
+                        <p class="text-xs font-bold uppercase mb-1">État du Stock :</p>
                         <div class="flex flex-wrap gap-y-1">
                             ${stockDisplay}
                         </div>
@@ -205,44 +202,48 @@
             }).join('');
         });
 
-        // CONFIRMER COMMANDE AVEC DÉCRÉMENTATION CIBLÉE
+        // CONFIRMER COMMANDE AVEC GESTION STOCK PAR TAILLE
         window.confirmOrder = async function(orderId) {
             if(!confirm("Confirmer la commande et déduire du stock ?")) return;
             
             try {
-                // 1. On récupère la commande pour savoir quelle taille déduire
+                // 1. Récupérer la commande
                 const orderDoc = await db.collection("orders").doc(orderId).get();
                 if (!orderDoc.exists) return alert("Commande introuvable");
                 
                 const items = orderDoc.data().items || [];
 
-                // 2. Pour chaque article, on déduit la quantité de sa taille spécifique
+                // 2. Mettre à jour le stock
                 for (const item of items) {
-                    // On cherche le produit par nom
                     const productQuery = await db.collection("products").where("name", "==", item.name).get();
                     
                     if (!productQuery.empty) {
                         const productDoc = productQuery.docs[0];
                         const productData = productDoc.data();
-                        const sizeOrdered = item.size.toString(); // ex: "42"
+                        const sizeOrdered = item.size.toString();
 
                         if (productData.stock && typeof productData.stock === 'object') {
                             const currentQty = productData.stock[sizeOrdered];
                             
                             if (currentQty > 0) {
-                                // Mise à jour de la clé spécifique dans la map stock (ex: stock.42)
-                                const updateKey = `stock.${sizeOrdered}`;
+                                const updateField = {};
+                                updateField[`stock.${sizeOrdered}`] = currentQty - 1;
+                                
+                                await db.collection("products").doc(productDoc.id).update(updateField);
+                            }
+                        } else {
+                            if (productData.stock > 0) {
                                 await db.collection("products").doc(productDoc.id).update({
-                                    [updateKey]: currentQty - 1
+                                    stock: productData.stock - 1
                                 });
                             }
                         }
                     }
                 }
 
-                // 3. On valide la commande
+                // 3. Valider
                 await db.collection("orders").doc(orderId).update({ status: "Confirmé" });
-                alert("Stock mis à jour et commande validée !");
+                alert("Commande validée et stock décrémenté !");
 
             } catch (e) {
                 console.error(e);
@@ -281,7 +282,6 @@
                 let statusBadge = "";
                 let actions = "";
 
-                // On passe uniquement l'ID à confirmOrder pour éviter les bugs de string
                 if(isConfirmed) {
                     statusBadge = `<div class="bg-green-100 text-green-700 px-4 py-2 font-bold border-2 border-green-700">✅ VALIDÉE</div>`;
                     actions = `<button onclick="deleteOrder('${doc.id}')" class="text-xs underline text-gray-500">Archiver</button>`;
@@ -311,7 +311,8 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <p class="font-bold">📞 ${o.phone}</p>
-                            <p class="text-sm italic mb-2">📍 ${o.wilaya}</p>
+                            <p class="text-sm italic mb-1">📍 ${o.wilaya}</p>
+                            <p class="text-sm font-bold mb-2">🏠 ${o.adresse || 'Adresse non renseignée'}</p>
                             <p class="text-xs opacity-50">Date: ${o.date}</p>
                         </div>
                         <div class="bg-gray-50 p-2 border-2 border-black/5">${itemsHtml || 'Détails manquants'}</div>
