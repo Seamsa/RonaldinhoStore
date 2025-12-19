@@ -49,11 +49,10 @@
         }
         .cat-bg {
             position: absolute; inset: 0; background-size: cover; background-position: center;
-            /* LE FILTRE "ESPRIT DU SITE" : Noir & Blanc + Contraste fort */
+            /* LE FILTRE "ESPRIT DU SITE" */
             filter: grayscale(100%) contrast(120%) brightness(0.8);
             transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94), filter 0.6s ease;
         }
-        /* Au survol : Retour couleur + Zoom */
         .category-card:hover .cat-bg { transform: scale(1.1); filter: grayscale(0%) contrast(100%) brightness(1); }
         .cat-overlay { position: absolute; inset: 0; background: linear-gradient(to top, black 10%, transparent 60%); opacity: 0.9; }
         .cat-content { position: absolute; bottom: 30px; left: 30px; z-index: 10; }
@@ -115,9 +114,10 @@
 
     <main id="home-view" class="view-section active">
         <header class="min-h-screen flex flex-col justify-center items-center relative pt-20 px-4 overflow-hidden">
-            <!-- IMAGE RONALDINHO INCRUSTÉE ICI (BACKGROUND) -->
+            <!-- IMAGE RONALDINHO INCRUSTÉE (BACKGROUND) -->
             <div class="absolute inset-0 z-0 pointer-events-none">
-                <img src="https://lh3.googleusercontent.com/rd-gg-dl/ABS2GSk40b7MgMcf19oKMhf2omM0j5WUyTJb0rmdi0wynqCr_wKKHVsXlQSginSsTZfK50GXT1jtKtZWeWO6pZo6gUGTiMqp7FjwdvSOm09iMlL4RuSUKqE9_4_mNzXljlX29_o7saLyTXmYGO7y71i8VvfwLj2FWHjaXXztm85wiFHqEjPz9ggEXHHu6muEPzroPdvvPtbqPJisrE9ZyY8ksaOHc2WSxrVp7LH2jJrUy5bBw5Dvqe6nW3uDbMjgc7KMIEyvT5Fvh0-kjcfCzlWzJTVjYaUvWp3Tx6zPAdPqfBY5VaEd14bN-HAkPMlrkIeJUmuRL3xU6BpelQ7czyI_CDtSXi4Ji4fWvNcZZcPpaC9iMGOPNqWLUWfvTvgidTUkvsTKSI-XNU9Q7V2R_8kcK6yUwts9Fnw0GOT0U31Kq2ijcUIpvtQkoHjacC6BmFaU5_W0IlSTfcjv4lNgmgm3KwaSfFIH-rL0dzkqm1N6m8siiwQouBWChyQbhamuPQ5CtcMdzml2IRFbtHmtZoEousA8wqvhQeZNnijPx9nlUttGEDpBoeZRRyel-TE0RRvrCwl-BAE4DSC8IUVTspI3P4y2K6EL-6ffZgB6owjlOK8akUiW9L7-vrngkuiI7Xv-vcUYRt_PMwqhrWmK67qzPl9KJdYibVOMYUzmG4B_gdzVLcPcmJ16alM5MBxV5DtaM0igMYQmJ7JR2YPPVm609nwINmzR0dko1XtBrPj4olwYkaYi08pr5WUQdknRdWnR7krpHnv_LzFrGNZ-iMwq5Nu8PSex_RYKrBQS7N1eO4tPeaRJgviOA5ES8AFB5BNe5eld1sq0IwNI1DUo8kBGZhEY-Jyya2AICWSWnrpAE40TOuSwutQiftmTXpY6xfRi3tbF1eHgSgFL38rNLhsrBjja8KZ1G7dLVcD2ioGwMRZ4wC3mHRpHUd7P3m8conAujZCa4XMt5LCxSnZN_m6bHTLTjkklqdftbLselOoRz-YViVFnG4MKQFSWfH_kfxzkNAE6ckqtZvcLVP-zK-skEgXW9m8BiPStz7UByxzVhes0DuQOA14Raiuz8zE6_rlVCuzvGmhym11GyGY4-71PSIX0z2DAv1LEPqS7P0bnHIU2dacM4X3del1TUphpSu8uALtBAIa_0thYqU-ESQalRCk4wrZsizOwGOOC5kRi2-JrYEvi2K3Q3yNPtTUupg9wq9cs4cOpXqIaFYIc-NIk9YaDSDOSu9JDYOYniVtXP8-Tsoyy3fg1V9v5aI6ZJ5g=s1024-rj" 
+                <!-- Image Unsplash Football/Stadium (Stable) -->
+                <img src="https://images.unsplash.com/photo-1579952363873-27f3bade9f55?q=80&w=1935&auto=format&fit=crop" 
                      class="w-full h-full object-cover opacity-60 grayscale contrast-125" 
                      style="object-position: center 20%;"
                      alt="Ronaldinho Background">
@@ -141,7 +141,7 @@
                 
                 <!-- CAT 1: OWN THE STREETS -->
                 <div onclick="openCategory('sneakers')" class="category-card neo-brutal-shadow-hover">
-                    <div class="cat-bg" style="background-image: url('https://cdn.inflact.com/media/483015756_17891217999191970_2223076410236114345_n.jpg?url=https%3A%2F%2Fscontent.cdninstagram.com%2Fv%2Ft51.2885-15%2F483015756_17891217999191970_2223076410236114345_n.jpg%3Fstp%3Ddst-jpg_e35_p1080x1080_sh0.08_tt6%26_nc_ht%3Dinstagram.fupg1-1.fna.fbcdn.net%26_nc_cat%3D106%26_nc_oc%3DQ6cZ2QFS3Tld0UosD6dhzrtTTgVDiLLW6dDNy74eGaWyAwytW-ceMib3v2eDfjRRQlwIODw%26_nc_ohc%3DLKnk29X6BVgQ7kNvwH7dmpU%26_nc_gid%3DZVP2LJHAWYCf4sW8dgbUpw%26edm%3DANTKIIoBAAAA%26ccb%3D7-5%26oh%3D00_Afkv-W7FpHYKspWqg2MiBCIAUF3ljsXRV96jGY_p8C63zw%26oe%3D694A7DC9%26_nc_sid%3Dd885a2&time=1766098800&key=c7ff73ee5f7ac5817c7ca735cf4ae39d');"></div>
+                    <div class="cat-bg" style="background-image: url('https://cdn.inflact.com/media/483015756_17891217999191970_2223076410236114345_n.jpg?url=https%3A%2F%2Fscontent.cdninstagram.com%2Fv%2Ft51.2885-15%2F483015756_17891217999191970_2223076410236114345_n.jpg%3Fstp%3Ddst-jpg_e35_p1080x1080_sh0.08_tt6%26_nc_ht%3Dinstagram.fsvz2-1.fna.fbcdn.net%26_nc_cat%3D106%26_nc_oc%3DQ6cZ2QHN2teJboy1QZStXHr9uBcJ2RfXuBAQCzR9sDzg4L6dnhk16fxuUxcPawS6W_4d01o%26_nc_ohc%3DLKnk29X6BVgQ7kNvwH5T1XZ%26_nc_gid%3D59h8r1Q8mVWOasf-KEJX_Q%26edm%3DANTKIIoBAAAA%26ccb%3D7-5%26oh%3D00_Afn6KR8eanpqznZmcbxWlgqvDlyUqdks5ERM1zjQyk56NA%26oe%3D694B5EC9%26_nc_sid%3Dd885a2&time=1766160000&key=9c9c38db585a0eabbaf13fef482c6591');"></div>
                     <div class="cat-overlay"></div>
                     <div class="cat-content">
                         <h3 class="cat-title heading-font text-5xl italic">OWN THE STREETS</h3>
@@ -151,7 +151,7 @@
 
                 <!-- CAT 2: DOMINATE THE FIELD -->
                 <div onclick="openCategory('street')" class="category-card neo-brutal-shadow-hover">
-                    <div class="cat-bg" style="background-image: url('https://cdn.inflact.com/media/587308831_17999153318833709_5563897657014266580_n.jpg?url=https%3A%2F%2Fscontent.cdninstagram.com%2Fv%2Ft51.2885-15%2F587308831_17999153318833709_5563897657014266580_n.jpg%3Fstp%3Ddst-jpg_e35_p1080x1080_sh0.08_tt6%26_nc_ht%3Dinstagram.fqfd1-1.fna.fbcdn.net%26_nc_cat%3D105%26_nc_oc%3DQ6cZ2QFi4pOajzKUebHnr_nhBCeJhEOAZ05pVcpIUGAKHHGEI299qhW26afb8pKRYcQQm5s%26_nc_ohc%3Dl1YyJkc_CSUQ7kNvwHCbDKk%26_nc_gid%3DZZHbBuwvGoHXy8XUcXrywQ%26edm%3DANTKIIoBAAAA%26ccb%3D7-5%26oh%3D00_AfnscxaiirBSXecsB7tBJP7ExPR25dZ_HCBUmBO1RxtSxw%26oe%3D694A7EE6%26_nc_sid%3Dd885a2&time=1766102400&key=f6c85fad725eba630b51839a0d4a2444');"></div>
+                    <div class="cat-bg" style="background-image: url('https://cdn.inflact.com/media/589106387_17999153327833709_8241364846420964450_n.jpg?url=https%3A%2F%2Fscontent.cdninstagram.com%2Fv%2Ft51.2885-15%2F589106387_17999153327833709_8241364846420964450_n.jpg%3Fstp%3Ddst-jpg_e35_p1080x1080_sh0.08_tt6%26_nc_ht%3Dinstagram.fcai20-2.fna.fbcdn.net%26_nc_cat%3D105%26_nc_oc%3DQ6cZ2QFe5mdJKiRW5Icnz-kosM7c0rO7hC587n4VXqhMIFwFyXqpK0BsCbd-bTS219FgQns%26_nc_ohc%3DEyii1mJD_CUQ7kNvwHNO68D%26_nc_gid%3DAbplrTkvmq0uRf2OQVDiew%26edm%3DANTKIIoBAAAA%26ccb%3D7-5%26oh%3D00_AfnV9Qx7rlwe-ODOkFMln6XktNzU4TJQb3m1NuiDG6Dz9w%26oe%3D694B4695%26_nc_sid%3Dd885a2&time=1766160000&key=820f6a0e6f2e9d24f219b778df8a0913');"></div>
                     <div class="cat-overlay"></div>
                     <div class="cat-content">
                         <h3 class="cat-title heading-font text-5xl italic">DOMINATE THE FIELD</h3>
@@ -305,6 +305,8 @@
         let currentUser = null;
         const wilayas = ["01 Adrar", "02 Chlef", "03 Laghouat", "04 Oum El Bouaghi", "05 Batna", "06 Béjaïa", "07 Biskra", "08 Béchar", "09 Blida", "10 Bouira", "11 Tamanrasset", "12 Tébessa", "13 Tlemcen", "14 Tiaret", "15 Tizi Ouzou", "16 Alger", "17 Djelfa", "18 Jijel", "19 Sétif", "20 Saïda", "21 Skikda", "22 Sidi Bel Abbès", "23 Annaba", "24 Guelma", "25 Constantine", "26 Médéa", "27 Mostaganem", "28 M'Sila", "29 Mascara", "30 Ouargla", "31 Oran", "32 El Bayadh", "33 Illizi", "34 Bordj Bou Arreridj", "35 Boumerdès", "36 El Tarf", "37 Tindouf", "38 Tissemsilt", "39 El Oued", "40 Khenchela", "41 Souk Ahras", "42 Tipaza", "43 Mila", "44 Aïn Defla", "45 Naâma", "46 Aïn Témouchent", "47 Ghardaïa", "48 Relizane", "49 El M'Ghair", "50 El Meniaa", "51 Ouled Djellal", "52 Bordj Baji Mokhtar", "53 Béni Abbès", "54 Timimoun", "55 Touggourt", "56 Djanet", "57 In Salah", "58 In Guezzam"];
 
+        if (!localStorage.getItem('r10_reset_v7')) { localStorage.removeItem('r10_orders'); localStorage.setItem('r10_reset_v7', 'true'); }
+
         auth.onAuthStateChanged(user => {
             currentUser = user;
             if (user) {
@@ -318,6 +320,15 @@
                 document.getElementById('sidebar-auth-logged-in').classList.add('hidden');
                 document.getElementById('not-connected-msg').classList.remove('hidden');
                 document.getElementById('orders-list').innerHTML = `<div class="p-12 border-4 border-dashed border-black text-center font-bold text-2xl uppercase opacity-50">AUCUNE COMMANDE POUR LE MOMENT</div>`;
+                
+                // VIDE LE FORMULAIRE SI PAS CONNECTÉ
+                if(document.getElementById('c-nom')) {
+                    document.getElementById('c-nom').value = "";
+                    document.getElementById('c-prenom').value = "";
+                    document.getElementById('c-phone').value = "";
+                    document.getElementById('c-wilaya').value = "";
+                    document.getElementById('c-adresse').value = "";
+                }
             }
         });
 
@@ -434,37 +445,14 @@
         function updateCartCount() { document.getElementById('cart-count').innerText = cart.length; }
         function renderSidebarCart() { const cont = document.getElementById('sidebar-cart-items'); if(cart.length === 0) { cont.innerHTML= `<div class='text-center py-10 opacity-50'>${currentLang === 'fr' ? 'TON PANIER EST VIDE' : 'EMPTY CART'}</div>`; return; } let total = 0; cont.innerHTML = cart.map((i, index) => { total+=i.price; return `<div class="border-4 border-black p-4 mb-2 bg-gray-50 flex justify-between items-center"><div><b class="block">${i.name}</b><span class="text-sm">Taille: ${i.size}</span></div><div class="flex items-center gap-4"><span>${i.price} DA</span><button onclick="removeFromCart(${index})" class="text-red-600 border-2 border-black px-2 hover:bg-black hover:text-white">X</button></div></div>` }).join(''); document.getElementById('sidebar-total').innerText = total + " DA"; }
         function removeFromCart(index) { cart.splice(index, 1); updateCartCount(); renderSidebarCart(); }
-        function goToCheckout() { 
-            if(cart.length === 0) return; 
-            toggleCart(false); 
-            showView('checkout'); 
-            
-            // On ne pre-remplit que si un utilisateur est connecté
-            if(currentUser) loadUserData(currentUser.uid); 
-            else {
-                // Pour les invités, on s'assure que les champs sont vides
-                if(document.getElementById('c-nom')) {
-                    document.getElementById('c-nom').value = "";
-                    document.getElementById('c-prenom').value = "";
-                    document.getElementById('c-phone').value = "";
-                    document.getElementById('c-wilaya').value = "";
-                    document.getElementById('c-adresse').value = "";
-                }
-            }
-        }
-        
+        function goToCheckout() { if(cart.length === 0) return; toggleCart(false); showView('checkout'); if(currentUser) loadUserData(currentUser.uid); }
         function resetCheckoutForm() { showView('home'); setTimeout(() => { document.getElementById('checkout-form-container').classList.remove('hidden'); document.getElementById('checkout-success').classList.add('hidden'); }, 500); }
 
         async function finaliserLaCaisse() {
             const nom = document.getElementById('c-nom').value; const prenom = document.getElementById('c-prenom').value; const num = document.getElementById('c-phone').value; const wilaya = document.getElementById('c-wilaya').value; const adresse = document.getElementById('c-adresse').value;
             if(!num || !nom) return alert("Veuillez remplir les informations !");
-            
-            // On ne sauvegarde rien en local
             const orderData = { userId: currentUser ? currentUser.uid : "guest", client: nom + " " + prenom, phone: num, wilaya: wilaya, adresse: adresse, items: cart, total: cart.reduce((acc, curr) => acc + curr.price, 0), status: "En attente de rappel", date: new Date().toLocaleString('fr-FR'), timestamp: firebase.firestore.FieldValue.serverTimestamp() };
-            
-            // Sauvegarder profil uniquement si connecté
             if(currentUser) await db.collection("users").doc(currentUser.uid).set({ nom, prenom, phone: num, wilaya, adresse }, { merge: true });
-            
             try { await db.collection("orders").add(orderData); document.getElementById('checkout-form-container').classList.add('hidden'); document.getElementById('res-num').innerText = num; document.getElementById('checkout-success').classList.remove('hidden'); cart = []; updateCartCount(); } catch(e) { alert("Erreur de commande : " + e.message); }
         }
 
